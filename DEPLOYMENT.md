@@ -36,59 +36,107 @@ flyctl auth token
 ### 2. Secrets Fly.io pour Staging
 
 ```bash
-# Backend secrets
+# Toutes les variables d'environnement pour staging
 flyctl secrets set \
-  SUPABASE_URL="https://your-project.supabase.co" \
-  SUPABASE_ANON_KEY="your-anon-key" \
+  NODE_ENV="production" \
+  PORT="3000" \
+  HOST="0.0.0.0" \
+  LOG_LEVEL="info" \
+  DATABASE_PATH="/app/apps/backend/data/digest.db" \
   JWT_SECRET="your-jwt-secret-staging" \
-  RESEND_API_KEY="your-resend-api-key" \
+  SUPABASE_URL="https://m1-api.grand-shooting.com" \
+  SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndsY3Rvd3hqeWd5cXpyb29pZW13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzNjI0MzYsImV4cCI6MjA3MzkzODQzNn0.Ql-fqixQfakgX7rLeUHNyoWsDfRk4MnpN1ChQFmOzB0" \
+  SUPABASE_SERVICE_ROLE_KEY="your-staging-service-role-key" \
+  NATS_URL="https://gs-stream-api-staging.fly.dev" \
+  NATS_API_KEY="gs_test_b595309238c077ee5ded5eab69780b33e637e06f6ea9490000bcf87fbecb6d3a" \
+  RESEND_API_KEY="re_YC4vzB8P_JoaTCpUrAAroYwQVs4tzYWw8" \
+  SENTRY_DSN="https://abc0eb1a2732324d551322d3f2258fb0@o4510375993802752.ingest.de.sentry.io/4510375995572304" \
+  AXIOM_TOKEN="xaat-fbb96daf-4e87-45a7-8724-32f601636784" \
+  AXIOM_DATASET="gs-dev" \
   FRONTEND_URL="https://gs-stream-digest-staging.fly.dev" \
+  BACKEND_URL="https://gs-stream-digest-staging.fly.dev" \
+  API_HOST="gs-stream-digest-staging.fly.dev" \
   --app gs-stream-digest-staging
 ```
 
 ### 3. Secrets Fly.io pour Production
 
 ```bash
-# Backend secrets
+# Toutes les variables d'environnement pour production
 flyctl secrets set \
-  SUPABASE_URL="https://your-project.supabase.co" \
-  SUPABASE_ANON_KEY="your-anon-key" \
+  NODE_ENV="production" \
+  PORT="3000" \
+  HOST="0.0.0.0" \
+  LOG_LEVEL="info" \
+  DATABASE_PATH="/app/apps/backend/data/digest.db" \
   JWT_SECRET="your-jwt-secret-production" \
-  RESEND_API_KEY="your-resend-api-key" \
-  FRONTEND_URL="https://gs-stream-digest.fly.dev" \
+  SUPABASE_URL="https://m0-api.grand-shooting.com" \
+  SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4emtvanJqamxzc2dpbm1xcmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NTE3MDksImV4cCI6MjA1OTMyNzcwOX0.Qm-VjrLZ5Zc7umEjZDrUYsAy8aIOe5dPzTGqbbI6JUU" \
+  SUPABASE_SERVICE_ROLE_KEY="your-production-service-role-key" \
+  NATS_URL="https://gs-stream-api.fly.dev" \
+  NATS_API_KEY="gs_live_7005db07f73b134b51302b63149d92fbbd534ef87a364f041f485bbe7c5b5230" \
+  RESEND_API_KEY="re_YC4vzB8P_JoaTCpUrAAroYwQVs4tzYWw8" \
+  SENTRY_DSN="https://abc0eb1a2732324d551322d3f2258fb0@o4510375993802752.ingest.de.sentry.io/4510375995572304" \
+  AXIOM_TOKEN="xaat-fbb96daf-4e87-45a7-8724-32f601636784" \
+  AXIOM_DATASET="gs-production" \
+  FRONTEND_URL="https://digest.grand-shooting.com" \
+  BACKEND_URL="https://digest-api.grand-shooting.com" \
+  API_HOST="digest-api.grand-shooting.com" \
   --app gs-stream-digest
 ```
 
 ## Variables d'environnement requises
 
-### Backend (apps/backend/.env)
+### Backend
+
+Toutes ces variables doivent être configurées sur Fly.io :
 
 ```env
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
+# Server
+NODE_ENV=production
+PORT=3000
+HOST=0.0.0.0
+LOG_LEVEL=info
+
+# Database
+DATABASE_PATH=/app/apps/backend/data/digest.db
 
 # JWT
-JWT_SECRET=your-secret-key
+JWT_SECRET=your-secret-key-change-this
+
+# Supabase
+SUPABASE_URL=https://m0-api.grand-shooting.com  # m1-api pour staging
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# NATS Events API
+NATS_URL=https://gs-stream-api.fly.dev  # gs-stream-api-staging pour staging
+NATS_API_KEY=your-nats-api-key
 
 # Email
 RESEND_API_KEY=re_xxxxxxxxxxxx
 
-# Frontend URL
-FRONTEND_URL=http://localhost:3001
+# Monitoring
+SENTRY_DSN=https://xxx@xxx.ingest.de.sentry.io/xxx
+AXIOM_TOKEN=xaat-xxxxxxxxxxxx
+AXIOM_DATASET=gs-production  # gs-dev pour staging
 
-# Database (géré automatiquement en production)
-DATABASE_PATH=./data/digest.db
+# URLs
+FRONTEND_URL=https://digest.grand-shooting.com
+BACKEND_URL=https://digest-api.grand-shooting.com
+API_HOST=digest-api.grand-shooting.com
 ```
 
-### Frontend (apps/frontend/.env.local)
+### Frontend
+
+Les variables frontend sont gérées via Next.js et doivent être configurées au build time :
 
 ```env
 # Backend API
 NEXT_PUBLIC_API_URL=http://localhost:3000
 
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://m0-api.grand-shooting.com
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
