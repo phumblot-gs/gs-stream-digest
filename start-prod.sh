@@ -6,13 +6,15 @@ echo "🚀 Starting GS Stream Digest in production mode..."
 # Run database migrations
 echo "📊 Running database migrations..."
 cd /app/apps/backend
-export DATABASE_PATH=./data/digest.db
+export DATABASE_PATH=/app/apps/backend/data/digest.db
 npm run db:migrate || echo "⚠️  Migrations failed or already applied"
 
 # Start backend in background
 echo "🔧 Starting backend on port 3000..."
-cd /app
-DATABASE_PATH=./apps/backend/data/digest.db npm run start --workspace=@gs-digest/backend &
+cd /app/apps/backend
+export DATABASE_PATH=/app/apps/backend/data/digest.db
+export PORT=3000
+npm start > /tmp/backend.log 2>&1 &
 BACKEND_PID=$!
 
 # Wait for backend to be ready
@@ -21,7 +23,10 @@ sleep 5
 
 # Start frontend
 echo "🎨 Starting frontend on port 3001..."
-npm run start --workspace=@gs-digest/frontend &
+cd /app/apps/frontend
+export PORT=3001
+export NEXT_PUBLIC_API_URL=http://localhost:3000
+npm start > /tmp/frontend.log 2>&1 &
 FRONTEND_PID=$!
 
 echo "✅ Both services started!"
