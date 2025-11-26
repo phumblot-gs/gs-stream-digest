@@ -5,7 +5,7 @@ echo "🚀 Starting GS Stream Digest in production mode..."
 
 # Run database migrations
 echo "📊 Running database migrations..."
-cd /app/apps/backend
+cd /app/packages/database
 export DATABASE_PATH=/app/apps/backend/data/digest.db
 npm run db:migrate || echo "⚠️  Migrations failed or already applied"
 
