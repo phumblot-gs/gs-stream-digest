@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.env*.local
+.DS_Store
+*.db
+*.db-*
+.next
+dist
+.turbo
+apps/backend/data/*.db
+apps/backend/data/*.db-*
