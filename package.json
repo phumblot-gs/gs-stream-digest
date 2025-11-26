@@ -1,0 +1,31 @@
+{
+  "name": "gs-stream-digest",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Email digest system for Grand Shooting stream events",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "db:generate": "npm run db:generate --workspace=@gs-digest/database",
+    "db:migrate": "npm run db:migrate --workspace=@gs-digest/database",
+    "db:push": "npm run db:push --workspace=@gs-digest/database",
+    "db:studio": "npm run db:studio --workspace=@gs-digest/database"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@10.5.0"
+}

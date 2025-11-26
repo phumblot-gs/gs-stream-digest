@@ -1,0 +1,7 @@
+{% if eventsCount == 1 %}
+  📁 {{ events | first | map: 'data.sharedBy.name' }} a partagé un fichier avec vous
+{% else %}
+  📁 {{ eventsCount }} nouveaux fichiers partagés
+  {%- assign uniqueSharers = events | map: 'data.sharedBy.name' | unique | count -%}
+  {%- if uniqueSharers == 1 %} par {{ events | first | map: 'data.sharedBy.name' }}{% endif %}
+{% endif %}

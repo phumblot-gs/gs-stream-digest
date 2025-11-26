@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "skipLibCheck": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "composite": true,
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@gs-digest/database": ["./packages/database/src"],
+      "@gs-digest/shared": ["./packages/shared/src"],
+      "@gs-digest/email-templates": ["./packages/email-templates/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".turbo"]
+}

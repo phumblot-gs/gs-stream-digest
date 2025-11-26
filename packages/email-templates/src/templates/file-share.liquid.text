@@ -1,0 +1,57 @@
+Nouveaux fichiers partagés - {{ digest.name }}
+================================================
+
+Bonjour,
+
+{{ eventsCount }} fichier{% if eventsCount > 1 %}s ont{% else %} a{% endif %} été partagé{% if eventsCount > 1 %}s{% endif %} avec vous.
+
+{% assign groupedEvents = events | groupBy: 'data.sharedBy.name' %}
+{% for group in groupedEvents %}
+----------------------------------------
+Partagé par {{ group.key }} ({{ group.items | count }} fichier{% if group.items.size > 1 %}s{% endif %})
+----------------------------------------
+
+{% for event in group.items %}
+📎 {{ event.data.file.name }}
+   {% if event.data.file.size %}Taille : {{ event.data.file.size | fileSize }}{% endif %}
+   Date : {{ event.timestamp | formatDate }}
+
+   {% if event.data.sharedWith and event.data.sharedWith.size > 0 -%}
+   Partagé avec : {% for recipient in event.data.sharedWith %}{{ recipient.name }}{% unless forloop.last %}, {% endunless %}{% endfor %}
+   {%- endif %}
+
+   {% if event.data.permissions -%}
+   Permissions : {% for perm in event.data.permissions -%}
+     {%- case perm -%}
+       {%- when 'view' %}Lecture
+       {%- when 'edit' %}Modification
+       {%- when 'download' %}Téléchargement
+       {%- when 'share' %}Partage
+     {%- endcase -%}
+     {%- unless forloop.last %}, {% endunless -%}
+   {%- endfor %}
+   {%- endif %}
+
+   {% if event.data.message -%}
+   Message : "{{ event.data.message | truncate: 200 }}"
+   {%- endif %}
+
+   {% if event.data.expiresAt -%}
+   ⚠️ Expire le {{ event.data.expiresAt | formatDate }}
+   {%- endif %}
+
+{% endfor %}
+{% endfor %}
+
+----------------------------------------
+
+Pour voir tous les fichiers partagés, visitez :
+https://app.grand-shooting.com/files
+
+----------------------------------------
+
+Cet email a été envoyé automatiquement par Grand Shooting.
+Pour gérer vos notifications, visitez vos paramètres :
+https://app.grand-shooting.com/settings/notifications
+
+© {{ now | date: "%Y" }} Grand Shooting. Tous droits réservés.

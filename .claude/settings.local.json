@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run db:generate:*)",
+      "Bash(npx create-next-app@latest frontend --typescript --tailwind --app --src-dir --import-alias \"@/*\" --no-eslint)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

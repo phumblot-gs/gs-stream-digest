@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ eventsCount }} nouveau(x) fichier(s) partagé(s)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .header .subtitle {
+      margin-top: 10px;
+      font-size: 16px;
+      opacity: 0.95;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .greeting {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .summary {
+      background-color: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .events-section {
+      margin-top: 30px;
+    }
+
+    .events-group {
+      margin-bottom: 30px;
+    }
+
+    .group-header {
+      font-size: 18px;
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .file-item {
+      background-color: #ffffff;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      transition: box-shadow 0.2s;
+    }
+
+    .file-item:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .file-header {
+      display: flex;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .file-icon {
+      width: 40px;
+      height: 40px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+      flex-shrink: 0;
+    }
+
+    .file-details {
+      flex-grow: 1;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: #212529;
+      font-size: 16px;
+      margin-bottom: 5px;
+      word-break: break-word;
+    }
+
+    .file-meta {
+      font-size: 14px;
+      color: #6c757d;
+      line-height: 1.5;
+    }
+
+    .file-meta-item {
+      margin-right: 15px;
+      display: inline-block;
+    }
+
+    .shared-with {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .shared-with-label {
+      font-size: 13px;
+      color: #6c757d;
+      margin-bottom: 5px;
+    }
+
+    .recipient-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .recipient-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background-color: #e7f3ff;
+      color: #0066cc;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .message-box {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      font-size: 14px;
+      font-style: italic;
+      color: #495057;
+    }
+
+    .footer {
+      padding: 20px 30px;
+      background-color: #f8f9fa;
+      text-align: center;
+      font-size: 14px;
+      color: #6c757d;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .action-button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+      margin: 20px 0;
+      transition: background-color 0.2s;
+    }
+
+    .action-button:hover {
+      background-color: #5a67d8;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 0;
+      }
+
+      .header {
+        padding: 20px;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .file-header {
+        flex-direction: column;
+      }
+
+      .file-icon {
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📁 Nouveaux fichiers partagés</h1>
+      <div class="subtitle">{{ digest.name }}</div>
+    </div>
+
+    <div class="content">
+      <div class="greeting">
+        Bonjour,
+      </div>
+
+      <div class="summary">
+        <strong>{{ eventsCount }} fichier{% if eventsCount > 1 %}s ont{% else %} a{% endif %} été partagé{% if eventsCount > 1 %}s{% endif %} avec vous</strong>
+        {% assign uniqueSharers = events | map: 'data.sharedBy.name' | unique | count %}
+        {% if uniqueSharers > 0 %}
+          par {{ uniqueSharers }} personne{% if uniqueSharers > 1 %}s{% endif %}
+        {% endif %}
+        depuis le {{ events | first | map: 'timestamp' | formatDate }}.
+      </div>
+
+      <div class="events-section">
+        {% assign groupedEvents = events | groupBy: 'data.sharedBy.name' %}
+
+        {% for group in groupedEvents %}
+          <div class="events-group">
+            <div class="group-header">
+              Partagé par {{ group.key }} ({{ group.items | count }} fichier{% if group.items.size > 1 %}s{% endif %})
+            </div>
+
+            {% for event in group.items %}
+              <div class="file-item">
+                <div class="file-header">
+                  <div class="file-icon">
+                    {% case event.data.file.mimeType %}
+                      {% when 'application/pdf' %}
+                        📄
+                      {% when 'image/jpeg', 'image/png', 'image/gif' %}
+                        🖼️
+                      {% when 'video/mp4', 'video/mpeg' %}
+                        🎥
+                      {% when 'application/zip', 'application/x-zip-compressed' %}
+                        📦
+                      {% else %}
+                        📎
+                    {% endcase %}
+                  </div>
+                  <div class="file-details">
+                    <div class="file-name">{{ event.data.file.name }}</div>
+                    <div class="file-meta">
+                      {% if event.data.file.size %}
+                        <span class="file-meta-item">📊 {{ event.data.file.size | fileSize }}</span>
+                      {% endif %}
+                      <span class="file-meta-item">📅 {{ event.timestamp | formatDate }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {% if event.data.sharedWith and event.data.sharedWith.size > 0 %}
+                  <div class="shared-with">
+                    <div class="shared-with-label">Partagé avec :</div>
+                    <div class="recipient-list">
+                      {% for recipient in event.data.sharedWith %}
+                        <span class="recipient-badge">
+                          {{ recipient.name }}
+                          {% case recipient.type %}
+                            {% when 'group' %} 👥
+                            {% when 'external' %} 🌐
+                          {% endcase %}
+                        </span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+
+                {% if event.data.permissions %}
+                  <div class="file-meta" style="margin-top: 10px;">
+                    <span class="file-meta-item">
+                      🔑 Permissions :
+                      {% for perm in event.data.permissions %}
+                        {% case perm %}
+                          {% when 'view' %}Lecture
+                          {% when 'edit' %}Modification
+                          {% when 'download' %}Téléchargement
+                          {% when 'share' %}Partage
+                        {% endcase %}
+                        {% unless forloop.last %}, {% endunless %}
+                      {% endfor %}
+                    </span>
+                  </div>
+                {% endif %}
+
+                {% if event.data.message %}
+                  <div class="message-box">
+                    💬 "{{ event.data.message | truncate: 200 }}"
+                  </div>
+                {% endif %}
+
+                {% if event.data.expiresAt %}
+                  <div class="file-meta" style="margin-top: 10px; color: #dc3545;">
+                    ⏰ Expire le {{ event.data.expiresAt | formatDate }}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="https://app.grand-shooting.com/files" class="action-button">
+          Voir tous les fichiers →
+        </a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>
+        Cet email a été envoyé automatiquement par Grand Shooting.<br>
+        Pour gérer vos notifications, visitez vos <a href="https://app.grand-shooting.com/settings/notifications">paramètres</a>.
+      </p>
+      <p style="margin-top: 15px; font-size: 12px; color: #adb5bd;">
+        © {{ now | date: "%Y" }} Grand Shooting. Tous droits réservés.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
