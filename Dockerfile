@@ -40,7 +40,6 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/apps/frontend/.next ./apps/frontend/.next
 COPY --from=builder /app/apps/frontend/package.json ./apps/frontend/
 COPY --from=builder /app/apps/frontend/next.config.js ./apps/frontend/
-COPY --from=builder /app/apps/frontend/public ./apps/frontend/public
 COPY --from=builder /app/apps/backend ./apps/backend
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/turbo.json ./
