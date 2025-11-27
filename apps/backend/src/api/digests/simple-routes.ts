@@ -364,7 +364,13 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Digest not found' });
       }
 
-      // TODO: Implement actual sending logic
+      // Import scheduler dynamically to avoid circular dependencies
+      const { DigestScheduler } = await import('../../services/scheduler');
+      const scheduler = new DigestScheduler();
+
+      // Trigger digest to run immediately
+      await scheduler.runDigestNow(id);
+
       return reply.send({
         success: true,
         message: 'Digest sent successfully',
