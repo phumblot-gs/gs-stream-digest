@@ -22,12 +22,20 @@ jobs:
 
       - name: Deploy to staging
         if: github.base_ref == 'staging'
-        run: flyctl deploy --config fly.staging.toml --remote-only --ha=false
+        run: |
+          flyctl deploy --config fly.staging.toml --remote-only --ha=false \
+            --build-arg NEXT_PUBLIC_API_URL=https://gs-stream-digest-staging.fly.dev \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=https://m1-api.grand-shooting.com \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndsY3Rvd3hqeWd5cXpyb29pZW13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzNjI0MzYsImV4cCI6MjA3MzkzODQzNn0.Ql-fqixQfakgX7rLeUHNyoWsDfRk4MnpN1ChQFmOzB0
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
       - name: Deploy to production
         if: github.base_ref == 'production'
-        run: flyctl deploy --config fly.toml --remote-only --ha=false
+        run: |
+          flyctl deploy --config fly.toml --remote-only --ha=false \
+            --build-arg NEXT_PUBLIC_API_URL=https://digest.grand-shooting.com \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=https://m0-api.grand-shooting.com \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4emtvanJqamxzc2dpbm1xcmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NTE3MDksImV4cCI6MjA1OTMyNzcwOX0.Qm-VjrLZ5Zc7umEjZDrUYsAy8aIOe5dPzTGqbbI6JUU
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
