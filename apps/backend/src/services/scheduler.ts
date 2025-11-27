@@ -93,6 +93,34 @@ export class DigestScheduler {
     try {
       const jobName = `digest-${digestId}`;
 
+      // Check if job already exists, if not add it temporarily
+      const existingJob = this.bree.config.jobs.find((job: any) => job.name === jobName);
+
+      if (!existingJob) {
+        // Get digest to verify it exists
+        const [digest] = await this.db
+          .select()
+          .from(schema.digests)
+          .where(eq(schema.digests.id, digestId))
+          .limit(1);
+
+        if (!digest) {
+          throw new Error(`Digest ${digestId} not found`);
+        }
+
+        // Add job temporarily with manual trigger context
+        this.bree.add({
+          name: jobName,
+          worker: {
+            workerData: {
+              digestId,
+              runType: 'manual',
+              env: process.env,
+            },
+          },
+        });
+      }
+
       // Run the job immediately
       await this.bree.run(jobName);
 
