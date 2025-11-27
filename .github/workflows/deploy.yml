@@ -22,12 +22,12 @@ jobs:
 
       - name: Deploy to staging
         if: github.base_ref == 'staging'
-        run: flyctl deploy --config fly.staging.toml --remote-only
+        run: flyctl deploy --config fly.staging.toml --remote-only --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
       - name: Deploy to production
         if: github.base_ref == 'production'
-        run: flyctl deploy --config fly.toml --remote-only
+        run: flyctl deploy --config fly.toml --remote-only --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
