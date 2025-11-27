@@ -25,7 +25,7 @@ sleep 5
 echo "🎨 Starting frontend on port 3001..."
 cd /app/apps/frontend
 export PORT=3001
-export NEXT_PUBLIC_API_URL=http://localhost:3000
+export BACKEND_URL=http://localhost:3000
 npm start > /tmp/frontend.log 2>&1 &
 FRONTEND_PID=$!
 
