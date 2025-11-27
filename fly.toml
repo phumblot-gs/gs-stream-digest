@@ -11,9 +11,9 @@ primary_region = 'cdg'  # Paris region
 [http_service]
   internal_port = 3001
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = false
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ['app']
 
 [[services]]
@@ -41,5 +41,5 @@ primary_region = 'cdg'  # Paris region
   initial_size = '1gb'
 
 [[vm]]
-  size = 'shared-cpu-1x'
-  memory = '512mb'
+  size = 'shared-cpu-4x'
+  memory = '2gb'
