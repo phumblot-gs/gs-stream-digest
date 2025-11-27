@@ -8,11 +8,16 @@ import { logEvent } from '../utils/axiom';
 export class DigestScheduler {
   private bree: Bree;
   private db = getDb();
+  private workerPath: string;
 
   constructor() {
+    // Determine the correct extension based on environment
+    const ext = process.env.NODE_ENV === 'production' ? 'js' : 'ts';
+    this.workerPath = path.join(__dirname, `../jobs/process-digest.${ext}`);
+
     this.bree = new Bree({
       root: path.join(__dirname, '../jobs'),
-      defaultExtension: process.env.NODE_ENV === 'production' ? 'js' : 'ts',
+      defaultExtension: ext,
       logger: false,
       workerMessageHandler: this.handleWorkerMessage.bind(this),
     });
@@ -46,7 +51,7 @@ export class DigestScheduler {
       // Add job to scheduler
       this.bree.add({
         name: `digest-${digestId}`,
-        path: path.join(__dirname, '../jobs/process-digest'),
+        path: this.workerPath,
         cron: cronExpression,
         worker: {
           workerData: {
@@ -112,7 +117,7 @@ export class DigestScheduler {
         // Add job temporarily with manual trigger context
         this.bree.add({
           name: jobName,
-          path: path.join(__dirname, '../jobs/process-digest'),
+          path: this.workerPath,
           worker: {
             workerData: {
               digestId,
