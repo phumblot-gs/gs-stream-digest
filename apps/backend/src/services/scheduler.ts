@@ -46,6 +46,7 @@ export class DigestScheduler {
       // Add job to scheduler
       this.bree.add({
         name: `digest-${digestId}`,
+        path: 'process-digest',
         cron: cronExpression,
         worker: {
           workerData: {
@@ -111,6 +112,7 @@ export class DigestScheduler {
         // Add job temporarily with manual trigger context
         this.bree.add({
           name: jobName,
+          path: 'process-digest',
           worker: {
             workerData: {
               digestId,
