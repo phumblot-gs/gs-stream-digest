@@ -165,7 +165,7 @@ export class EmailSender {
 
       // Send email via Resend
       const response = await this.resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'digest@grand-shooting.com',
+        from: process.env.RESEND_FROM_EMAIL || 'noreply@mediagrade.grand-shooting.com',
         to: recipient,
         subject,
         html: rendered.bodyHtml,

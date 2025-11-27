@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// Use relative URLs to call Next.js API routes which proxy to backend
+const API_URL = '';
 
 export interface ApiError {
   message: string;
@@ -20,7 +21,7 @@ export class ApiClient {
   ): Promise<T> {
     const token = await this.getAuthToken();
 
-    const response = await fetch(`${API_URL}/api${endpoint}`, {
+    const response = await fetch(`/api${endpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
