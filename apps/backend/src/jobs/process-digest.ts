@@ -22,8 +22,17 @@ async function processDigest() {
   const natsClient = new NATSEventClient();
   const emailSender = new EmailSender();
   const runId = nanoid();
+  const startTime = Date.now();
 
   logger.info(`Processing digest ${data.digestId} (run: ${runId})`);
+
+  // Log job start to Axiom
+  await logEvent('digest.job_started', {
+    digestId: data.digestId,
+    runId,
+    runType: data.runType || 'scheduled',
+    triggeredBy: data.triggeredBy
+  });
 
   try {
     // Get digest configuration
@@ -39,6 +48,15 @@ async function processDigest() {
 
     if (!digest.isActive || digest.isPaused) {
       logger.info(`Digest ${data.digestId} is not active or is paused`);
+
+      // Log skipped digest to Axiom
+      await logEvent('digest.job_skipped', {
+        digestId: data.digestId,
+        runId,
+        reason: !digest.isActive ? 'not_active' : 'paused',
+        durationMs: Date.now() - startTime
+      });
+
       return;
     }
 
@@ -89,6 +107,16 @@ async function processDigest() {
       events = EventFilter.filterEvents(rawEvents, filters);
 
       logger.info(`Fetched and filtered ${events.length} events for digest ${digest.id}`);
+
+      // Log event fetching result to Axiom
+      await logEvent('digest.events_fetched', {
+        digestId: digest.id,
+        runId,
+        rawEventsCount: rawEvents.length,
+        filteredEventsCount: events.length,
+        lastCheckAt: lastCheckAt.toISOString(),
+        lastEventUid: digest.lastEventUid
+      });
     } catch (error) {
       logger.error(`Failed to fetch events for digest ${digest.id}:`, error);
       throw error;
@@ -97,6 +125,13 @@ async function processDigest() {
     // Check if there are events to send
     if (events.length === 0) {
       logger.info(`No events to send for digest ${digest.id}`);
+
+      // Log no events to Axiom
+      await logEvent('digest.no_events', {
+        digestId: digest.id,
+        runId,
+        durationMs: Date.now() - startTime
+      });
 
       // Update digest run
       await db
@@ -203,13 +238,26 @@ async function processDigest() {
       }
     });
 
+    // Log successful job completion to Axiom
+    await logEvent('digest.job_completed', {
+      digestId: digest.id,
+      runId,
+      runType: data.runType || 'scheduled',
+      eventsCount: events.length,
+      recipientsCount: recipients.length,
+      emailsSent: emailResults.sent,
+      emailsFailed: emailResults.failed,
+      status: emailResults.failed > 0 ? 'partial' : 'success',
+      durationMs: Date.now() - startTime
+    });
+
     await logEvent('digest.processed', {
       digestId: digest.id,
       runId,
       eventsCount: events.length,
       emailsSent: emailResults.sent,
       emailsFailed: emailResults.failed,
-      durationMs: Date.now() - new Date(runId).getTime()
+      durationMs: Date.now() - startTime
     });
 
     // Send success message to parent
@@ -232,9 +280,19 @@ async function processDigest() {
         status: 'failed',
         error: error instanceof Error ? error.message : 'Unknown error',
         completedAt: new Date(),
-        durationMs: Date.now() - new Date(runId).getTime()
+        durationMs: Date.now() - startTime
       })
       .where(eq(schema.digestRuns.id, runId));
+
+    // Log job failure to Axiom with detailed error info
+    await logEvent('digest.job_failed', {
+      digestId: data.digestId,
+      runId,
+      runType: data.runType || 'scheduled',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+      durationMs: Date.now() - startTime
+    });
 
     await logEvent('digest.failed', {
       digestId: data.digestId,
