@@ -15,6 +15,13 @@
       "when": 1764144553670,
       "tag": "0001_glamorous_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1764270401723,
+      "tag": "0002_dear_smasher",
+      "breakpoints": true
     }
   ]
 }

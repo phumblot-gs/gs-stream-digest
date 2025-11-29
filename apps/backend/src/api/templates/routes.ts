@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { db, digestTemplates, digests } from '@gs-digest/database';
+import { getDb, digestTemplates, digests } from '@gs-digest/database';
 import { eq, desc, sql } from 'drizzle-orm';
 import { EmailRenderer } from '@gs-digest/email-templates';
 import { randomUUID } from 'crypto';
@@ -34,6 +34,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   // List all templates with digest count
   fastify.get('/', async (request, reply) => {
     try {
+      const db = getDb();
       // Get all templates
       const allTemplates = await db
         .select()
@@ -75,6 +76,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       const templates = await db.select().from(digestTemplates)
         .where(eq(digestTemplates.id, id))
@@ -95,6 +97,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id/digests', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       // Check if template exists
       const template = await db.select().from(digestTemplates)
@@ -151,6 +154,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/', async (request, reply) => {
     try {
       const data = createTemplateSchema.parse(request.body);
+      const db = getDb();
 
       // Validate Liquid syntax
       const renderer = new EmailRenderer();
@@ -206,6 +210,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateTemplateSchema.parse(request.body);
+      const db = getDb();
 
       // Fetch existing template
       const templates = await db.select().from(digestTemplates)
@@ -279,6 +284,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       // Fetch existing template
       const templates = await db.select().from(digestTemplates)

@@ -50,3 +50,4 @@ data/*.db-*
 
 # OS
 Thumbs.db
+data/
