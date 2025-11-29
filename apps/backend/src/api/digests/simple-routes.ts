@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { db, digests, digestTemplates } from '@gs-digest/database';
+import { getDb, digests, digestTemplates } from '@gs-digest/database';
 import { eq, desc, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { EmailSender } from '../../services/email/sender';
@@ -29,6 +29,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   // List all digests
   fastify.get('/', async (request, reply) => {
     try {
+      const db = getDb();
       const allDigests = await db
         .select()
         .from(digests)
@@ -82,6 +83,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       const digestList = await db.select().from(digests)
         .where(eq(digests.id, id))
@@ -135,6 +137,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/', async (request, reply) => {
     try {
       const data = createDigestSchema.parse(request.body);
+      const db = getDb();
 
       // Normalize filters: convert sourceApplications to applications for backward compatibility
       const normalizedFilters = { ...data.filters };
@@ -177,6 +180,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateDigestSchema.parse(request.body);
+      const db = getDb();
 
       // Fetch existing digest
       const existingDigests = await db.select().from(digests)
@@ -231,6 +235,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       // Check if digest exists
       const existingDigests = await db.select().from(digests)
@@ -258,6 +263,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const { recipientEmail, limit = 10 } = request.body as { recipientEmail: string; limit?: number };
+      const db = getDb();
 
       // Get digest
       const digestList = await db.select().from(digests)
@@ -354,6 +360,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/:id/send', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       // Get digest
       const digestList = await db.select().from(digests)

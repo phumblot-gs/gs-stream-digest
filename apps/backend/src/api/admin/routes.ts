@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { db, applications, eventTypes } from '@gs-digest/database';
+import { getDb, applications, eventTypes } from '@gs-digest/database';
 import { eq, desc, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
@@ -36,6 +36,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // List all applications
   fastify.get('/applications', async (request, reply) => {
     try {
+      const db = getDb();
       const apps = await db.select().from(applications)
         .orderBy(asc(applications.label));
       return reply.send(apps);
@@ -49,6 +50,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/applications/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
       const apps = await db.select().from(applications)
         .where(eq(applications.id, id))
         .limit(1);
@@ -68,6 +70,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/applications', async (request, reply) => {
     try {
       const data = createApplicationSchema.parse(request.body);
+      const db = getDb();
 
       const app = {
         id: randomUUID(),
@@ -95,6 +98,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateApplicationSchema.parse(request.body);
+      const db = getDb();
 
       const apps = await db.select().from(applications)
         .where(eq(applications.id, id))
@@ -128,6 +132,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/applications/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       const apps = await db.select().from(applications)
         .where(eq(applications.id, id))
@@ -152,6 +157,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // List all event types
   fastify.get('/event-types', async (request, reply) => {
     try {
+      const db = getDb();
       const types = await db.select().from(eventTypes)
         .orderBy(asc(eventTypes.label));
       return reply.send(types);
@@ -165,6 +171,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/event-types/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
       const types = await db.select().from(eventTypes)
         .where(eq(eventTypes.id, id))
         .limit(1);
@@ -184,6 +191,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/event-types', async (request, reply) => {
     try {
       const data = createEventTypeSchema.parse(request.body);
+      const db = getDb();
 
       const eventType = {
         id: randomUUID(),
@@ -212,6 +220,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateEventTypeSchema.parse(request.body);
+      const db = getDb();
 
       const types = await db.select().from(eventTypes)
         .where(eq(eventTypes.id, id))
@@ -245,6 +254,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/event-types/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       const types = await db.select().from(eventTypes)
         .where(eq(eventTypes.id, id))

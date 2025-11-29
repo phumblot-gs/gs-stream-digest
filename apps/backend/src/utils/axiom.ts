@@ -5,10 +5,10 @@ let axiom: Axiom | null = null;
 let dataset: string | null = null;
 
 export function initializeAxiom(): Axiom | null {
-  const token = process.env.AXIOM_TOKEN;
+  const token = process.env.AXIOM_API_KEY || process.env.AXIOM_TOKEN;
 
   if (!token) {
-    logger.warn('AXIOM_TOKEN not configured, Axiom logging disabled');
+    logger.warn('AXIOM_API_KEY not configured, Axiom logging disabled');
     return null;
   }
 
