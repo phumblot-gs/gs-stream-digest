@@ -1,13 +1,9 @@
+import { Axiom } from '@axiomhq/js';
 import { logger } from './logger';
 
-// Note: Axiom integration temporarily disabled due to API changes
-// TODO: Update to latest Axiom API
+let axiom: Axiom | null = null;
+let dataset: string | null = null;
 
-<<<<<<< Updated upstream
-export function initializeAxiom(): null {
-  logger.warn('Axiom integration disabled');
-  return null;
-=======
 export function initializeAxiom(): Axiom | null {
   const token = process.env.AXIOM_API_KEY || process.env.AXIOM_TOKEN;
 
@@ -47,18 +43,12 @@ export function initializeAxiom(): Axiom | null {
     }, 'Failed to initialize Axiom');
     return null;
   }
->>>>>>> Stashed changes
 }
 
-export function getAxiom(): null {
-  return null;
+export function getAxiom(): Axiom | null {
+  return axiom;
 }
 
-<<<<<<< Updated upstream
-export async function logEvent(event: string, _data: any) {
-  // Axiom logging disabled
-  logger.debug(`Would log event to Axiom: ${event}`);
-=======
 export function getDataset(): string | null {
   return dataset;
 }
@@ -81,5 +71,4 @@ export async function logEvent(event: string, data: any) {
   } catch (error) {
     logger.error(`Failed to log event to Axiom: ${event}`, error);
   }
->>>>>>> Stashed changes
 }
