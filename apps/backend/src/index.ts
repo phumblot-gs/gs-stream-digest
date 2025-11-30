@@ -167,6 +167,10 @@ async function start() {
       await scheduler.stop();
       await server.close();
 
+      // Flush Axiom logs before shutdown
+      const { flushAxiomLogs } = await import('./utils/logger');
+      await flushAxiomLogs();
+
       if (axiomInstance) {
         await axiomInstance.flush();
       }
