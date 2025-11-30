@@ -256,13 +256,9 @@ const digestRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Build update data
-<<<<<<< Updated upstream
       const updateData: any = {
         updatedAt: new Date()
       };
-=======
-      const updateData: any = {};
->>>>>>> Stashed changes
 
       if (data.name !== undefined) updateData.name = data.name;
       if (data.description !== undefined) updateData.description = data.description;
