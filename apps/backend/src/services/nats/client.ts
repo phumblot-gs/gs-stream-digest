@@ -57,8 +57,8 @@ export class NATSEventClient {
         limit: filters?.limit || 1000, // Use max limit to get as many events as possible
       };
 
-      // Add account filter
-      if (filters?.accountId) {
+      // Add account filter (only if accountId is valid, not 'default' or empty)
+      if (filters?.accountId && filters.accountId !== 'default' && filters.accountId.trim() !== '') {
         requestBody.filters.accountIds = [filters.accountId];
       }
 

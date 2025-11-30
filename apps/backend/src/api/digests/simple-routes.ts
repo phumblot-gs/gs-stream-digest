@@ -5,6 +5,7 @@ import { eq, desc, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { EmailSender } from '../../services/email/sender';
 import { Sentry } from '../../utils/sentry';
+import { logger } from '../../utils/logger';
 
 const createDigestSchema = z.object({
   name: z.string().min(1),
@@ -147,10 +148,14 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         normalizedFilters.applications = normalizedFilters.sourceApplications;
       }
 
+      // Get accountId from authenticated user if available, otherwise use null (don't use 'default')
+      const accountId = (request as any).user?.accountId || null;
+      const createdBy = (request as any).user?.id || 'system';
+
       // PostgreSQL handles timestamps with default functions
       const digest: any = {
         id: randomUUID(),
-        accountId: 'default', // TODO: Get from auth
+        accountId, // Use user's accountId or null (not 'default')
         name: data.name,
         description: data.description || null,
         filters: JSON.stringify(normalizedFilters),
@@ -160,7 +165,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         testRecipients: data.testRecipients ? JSON.stringify(data.testRecipients) : '[]',
         templateId: data.templateId,
         isActive: data.isActive,
-        createdBy: 'system', // TODO: Get from auth
+        createdBy,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -328,7 +333,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
       );
 
       if (!result.success) {
-        fastify.log.error('EmailSender.sendTestEmail failed:', result.error);
+        logger.error({ error: result.error }, 'EmailSender.sendTestEmail failed');
         return reply.status(500).send({
           success: false,
           message: result.error || 'Failed to send test email',
@@ -349,7 +354,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         emailSent: true
       });
     } catch (error) {
-      fastify.log.error('Test digest endpoint error:', error);
+      logger.error({ error }, 'Test digest endpoint error');
       Sentry.captureException(error);
       return reply.status(500).send({
         error: 'Failed to send test digest',

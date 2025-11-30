@@ -171,10 +171,14 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
+      // Get accountId from authenticated user if available, otherwise use null (don't use 'default')
+      const accountId = (request as any).user?.accountId || null;
+      const createdBy = (request as any).user?.id || 'system';
+
       // PostgreSQL handles timestamps with default functions
       const template: any = {
         id: randomUUID(),
-        accountId: 'default', // TODO: Get from auth
+        accountId, // Use user's accountId or null (not 'default')
         name: data.name,
         description: data.description || null,
         subjectLiquid: data.subjectLiquid,
@@ -182,7 +186,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         bodyTextLiquid: data.bodyTextLiquid || null,
         isGlobal: data.isGlobal,
         isDefault: data.isDefault,
-        createdBy: 'system', // TODO: Get from auth
+        createdBy,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
