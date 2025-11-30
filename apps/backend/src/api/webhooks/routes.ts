@@ -25,6 +25,11 @@ const webhookRoutes: FastifyPluginAsync = async (fastify) => {
         // Verify webhook signature (if configured)
         // TODO: Add webhook signature verification
 
+<<<<<<< Updated upstream
+=======
+        // PostgreSQL handles timestamps with default functions
+
+>>>>>>> Stashed changes
         // Store webhook event
         await db.insert(schema.webhookEvents).values({
           id: event.id || nanoid(),
@@ -32,7 +37,10 @@ const webhookRoutes: FastifyPluginAsync = async (fastify) => {
           eventId: event.id,
           resendId: event.data?.email_id,
           payload: JSON.stringify(event),
+<<<<<<< Updated upstream
           receivedAt: new Date()
+=======
+>>>>>>> Stashed changes
         });
 
         // Update email status

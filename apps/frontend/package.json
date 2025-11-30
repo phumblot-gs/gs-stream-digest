@@ -48,6 +48,8 @@
     "@types/react": "^18.3.16",
     "@types/react-dom": "^18.3.6",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.6",
     "postcss": "^8.4.49",
     "typescript": "^5.7.2"
   }

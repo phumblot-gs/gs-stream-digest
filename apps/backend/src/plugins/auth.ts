@@ -23,11 +23,59 @@ export interface AuthPluginOptions {
 async function authPlugin(fastify: FastifyInstance) {
   const db = getDb();
 
+  // Log Supabase configuration
+  logger.info({
+    event: 'supabase_init',
+    phase: 'start',
+    config: {
+      SUPABASE_URL: process.env.SUPABASE_URL || '[NOT SET]',
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? '[SET]' : '[NOT SET]',
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? '[SET]' : '[NOT SET]',
+    },
+  }, 'Initializing Supabase client...');
+
   // Initialize Supabase client
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  let supabase;
+  try {
+    if (!process.env.SUPABASE_URL) {
+      throw new Error('SUPABASE_URL environment variable is not set');
+    }
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is not set');
+    }
+
+    supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    // Test Supabase connection
+    const { data: healthCheck, error: healthError } = await supabase.auth.getSession();
+    
+    logger.info({
+      event: 'supabase_init',
+      phase: 'success',
+      healthCheck: {
+        hasError: !!healthError,
+        errorMessage: healthError?.message,
+      },
+    }, '✅ Supabase client initialized');
+  } catch (error) {
+    logger.error({
+      event: 'supabase_init',
+      phase: 'failed',
+      error: error instanceof Error ? {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      } : String(error),
+      config: {
+        SUPABASE_URL: process.env.SUPABASE_URL || '[NOT SET]',
+        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? '[SET]' : '[NOT SET]',
+      },
+    }, '❌ Failed to initialize Supabase client');
+    throw error;
+  }
 
   // Decorate request with Supabase client (check if not already decorated)
   if (!fastify.hasRequestDecorator('supabase')) {

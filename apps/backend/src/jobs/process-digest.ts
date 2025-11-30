@@ -24,6 +24,17 @@ async function processDigest() {
   const runId = nanoid();
 
   logger.info(`Processing digest ${data.digestId} (run: ${runId})`);
+<<<<<<< Updated upstream
+=======
+
+  // Log job start to Axiom
+  await logEvent('digest.job_started', {
+    digestId: data.digestId,
+    runId,
+    runType: data.runType || 'scheduled',
+    triggeredBy: data.triggeredBy
+  });
+>>>>>>> Stashed changes
 
   try {
     // Get digest configuration

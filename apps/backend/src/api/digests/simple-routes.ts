@@ -142,6 +142,11 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         normalizedFilters.applications = normalizedFilters.sourceApplications;
       }
 
+<<<<<<< Updated upstream
+=======
+      // PostgreSQL handles timestamps with default functions
+
+>>>>>>> Stashed changes
       const digest: any = {
         id: randomUUID(),
         accountId: 'default', // TODO: Get from auth
@@ -155,8 +160,11 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         templateId: data.templateId,
         isActive: data.isActive,
         createdBy: 'system', // TODO: Get from auth
+<<<<<<< Updated upstream
         createdAt: new Date(),
         updatedAt: new Date()
+=======
+>>>>>>> Stashed changes
       };
 
       await db.insert(digests).values(digest);
@@ -188,9 +196,13 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Prepare update data
+<<<<<<< Updated upstream
       const updateData: any = {
         updatedAt: new Date()
       };
+=======
+      const updateData: any = {};
+>>>>>>> Stashed changes
 
       // Add fields from data, converting objects/arrays to JSON strings
       if (data.name !== undefined) updateData.name = data.name;
