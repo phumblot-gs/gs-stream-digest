@@ -1,7 +1,7 @@
 export { getDb, resetDb } from './client';
-
-// Export the correct schemas based on database type (PostgreSQL or SQLite)
-export * from './schemas';
+export * from './schema/digests';
+export * from './schema/admin';
+export * from './schema/templates';
 
 // IMPORTANT: Do not export a pre-initialized db instance here!
 // It would be called at module load time, before environment variables are loaded.
