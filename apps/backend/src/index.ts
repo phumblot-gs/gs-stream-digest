@@ -92,12 +92,20 @@ async function start() {
     
     logger.info({ event: 'monitoring_init', phase: 'axiom' }, 'Initializing Axiom...');
     const axiom = initializeAxiom();
-    if (!axiom) {
-      logger.warn({ event: 'monitoring_init_failed', service: 'axiom' }, 'Axiom not initialized - logs will not be sent to Axiom');
-    }
     
     // Store axiom instance for shutdown
     const axiomInstance = axiom;
+    
+    if (!axiom) {
+      console.warn('[Axiom] ⚠️  Axiom not initialized - check AXIOM_TOKEN environment variable');
+      // Don't log this warning to logger to avoid confusion - use console instead
+    } else {
+      // Send a test log after initialization to confirm it works
+      logger.info({ 
+        event: 'axiom_ready',
+        message: 'Axiom logging is now active',
+      }, 'Axiom logging enabled');
+    }
 
     // Initialize database with detailed logging
     logger.info({ event: 'database_init', phase: 'start' }, 'Initializing database connection...');

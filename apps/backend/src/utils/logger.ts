@@ -56,6 +56,7 @@ const axiomStream = {
       const axiom = getAxiom();
       const dataset = getDataset();
       
+      // Only queue if Axiom is initialized (avoid "not initialized" messages)
       if (axiom && dataset) {
         // Add to queue
         logQueue.push({
@@ -73,6 +74,7 @@ const axiomStream = {
           flushLogsToAxiom().catch(console.error);
         }
       }
+      // Silently skip if Axiom is not yet initialized (will be initialized later)
     } catch (error) {
       // Silently fail to avoid infinite loops
       console.error('[Logger] Failed to queue log for Axiom:', error);
