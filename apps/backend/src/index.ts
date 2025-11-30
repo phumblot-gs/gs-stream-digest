@@ -99,6 +99,9 @@ async function start() {
     if (!axiom) {
       logger.warn({ event: 'monitoring_init_failed', service: 'axiom' }, 'Axiom not initialized - logs will not be sent to Axiom');
     }
+    
+    // Store axiom instance for shutdown
+    const axiomInstance = axiom;
 
     // Initialize database with detailed logging
     logger.info({ event: 'database_init', phase: 'start' }, 'Initializing database connection...');
@@ -164,8 +167,8 @@ async function start() {
       await scheduler.stop();
       await server.close();
 
-      if (axiom) {
-        await axiom.flush();
+      if (axiomInstance) {
+        await axiomInstance.flush();
       }
 
       process.exit(0);
