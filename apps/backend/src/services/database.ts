@@ -1,14 +1,10 @@
-import { db, digests } from '@gs-digest/database';
+import { getDb, digests } from '@gs-digest/database';
 import { logger } from '../utils/logger';
 
 // Helper function to extract hostname from DATABASE_URL
 function extractDbHostname(url: string | undefined): string {
   if (!url) return '[NOT SET]';
   try {
-<<<<<<< Updated upstream
-    // Test connection by selecting from digests table
-    const result = await db.select().from(digests).limit(1);
-=======
     const parsed = new URL(url);
     return parsed.hostname || '[INVALID URL]';
   } catch {
@@ -48,14 +44,9 @@ export async function initializeDatabase() {
       queryDuration,
       resultCount: result.length,
     }, '✅ Database initialized successfully');
->>>>>>> Stashed changes
 
     return db;
   } catch (error) {
-<<<<<<< Updated upstream
-    logger.error('Database initialization failed:');
-    console.error(error); // Use console.error for full error output
-=======
     const duration = Date.now() - startTime;
     const errorDetails = error instanceof Error ? {
       message: error.message,
@@ -77,7 +68,6 @@ export async function initializeDatabase() {
     }, '❌ Database initialization failed');
     
     console.error('[initializeDatabase] Full error:', error);
->>>>>>> Stashed changes
     throw error;
   }
 }
