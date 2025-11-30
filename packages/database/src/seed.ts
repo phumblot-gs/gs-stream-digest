@@ -1,5 +1,5 @@
 import { getDb } from './client';
-import { templates } from './schema-pg/templates';
+import { emailTemplates } from './schema-pg/templates';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -25,7 +25,7 @@ async function seed() {
     // Check if we're using PostgreSQL
     if (process.env.DATABASE_URL) {
       // Insert the template with proper date conversion for PostgreSQL
-      await (db as any).insert(templates).values({
+      await (db as any).insert(emailTemplates).values({
         id: template.id,
         name: template.name,
         description: template.description,
@@ -44,7 +44,7 @@ async function seed() {
       console.log('✅ Template inserted successfully in PostgreSQL');
     } else {
       // SQLite version (keep timestamps as is)
-      const { templates: templatesTable } = await import('./schema/templates');
+      const { emailTemplates: templatesTable } = await import('./schema/templates');
       await (db as any).insert(templatesTable).values({
         id: template.id,
         name: template.name,
