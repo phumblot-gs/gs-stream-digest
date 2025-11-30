@@ -125,15 +125,17 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
     });
 
     // Calculate time window
-    const lastCheckAt = digest.lastCheckAt ? new Date(digest.lastCheckAt) : new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const currentTime = Date.now();
+    // Use lastCheckAt as 'from' (or default to 24h ago if first run)
+    const fromTime = digest.lastCheckAt ? new Date(digest.lastCheckAt) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Use current time as 'to' - this will become the next 'from'
+    const toTime = new Date();
 
     // Fetch events from NATS
     let events: Event[] = [];
     try {
       const filters = JSON.parse(digest.filters) as EventFilters;
 
-      // Log digest accountId for debugging
+      // Log digest accountId and time range for debugging
       logger.info({
         event: 'digest_fetch_events',
         digestId: digest.id,
@@ -141,16 +143,21 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
         accountIdType: typeof digest.accountId,
         accountIdIsDefault: digest.accountId === 'default',
         accountIdIsNull: digest.accountId === null,
-      }, `Fetching events for digest ${digest.id} with accountId: ${digest.accountId}`);
+        timeRange: {
+          from: fromTime.toISOString(),
+          to: toTime.toISOString(),
+        },
+      }, `Fetching events for digest ${digest.id} with accountId: ${digest.accountId} from ${fromTime.toISOString()} to ${toTime.toISOString()}`);
 
-      // Fetch raw events
+      // Fetch raw events with explicit time range
       const rawEvents = await natsClient.fetchEventsSince(
         digest.lastEventUid,
-        lastCheckAt.getTime(),
+        fromTime.getTime(),
         {
           accountId: digest.accountId,
           eventTypes: filters.eventTypes
-        }
+        },
+        toTime.getTime() // Pass 'to' timestamp explicitly
       );
 
       // Apply additional filters
@@ -164,7 +171,7 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
         runId,
         rawEventsCount: rawEvents.length,
         filteredEventsCount: events.length,
-        lastCheckAt: lastCheckAt.toISOString(),
+        lastCheckAt: fromTime.toISOString(), // Use the 'from' timestamp
         lastEventUid: digest.lastEventUid
       });
     } catch (error) {
@@ -195,11 +202,12 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
         })
         .where(eq(digestRuns.id, runId));
 
-      // Update digest last check
+      // Update digest last check with the 'to' timestamp
+      // This ensures the next run will use this timestamp as 'from'
       await db
         .update(digests)
         .set({
-          lastCheckAt: new Date(),
+          lastCheckAt: toTime, // Use the 'to' timestamp from this request
           updatedAt: new Date()
         })
         .where(eq(digests.id, digest.id));
@@ -263,15 +271,24 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
       .where(eq(digestRuns.id, runId));
 
     // Update digest with last event info (only for non-test runs)
+    // IMPORTANT: Set lastCheckAt to the 'to' timestamp used in this request
+    // This ensures the next run will use this timestamp as 'from'
     if (data.runType !== 'test') {
       await db
         .update(digests)
         .set({
           lastEventUid: lastEvent.uid,
-          lastCheckAt: new Date(),
+          lastCheckAt: toTime, // Use the 'to' timestamp from this request
           updatedAt: new Date()
         })
         .where(eq(digests.id, digest.id));
+      
+      logger.info({
+        event: 'digest_updated',
+        digestId: digest.id,
+        lastCheckAt: toTime.toISOString(),
+        lastEventUid: lastEvent.uid,
+      }, `Updated digest ${digest.id} - next run will start from ${toTime.toISOString()}`);
     }
 
     // Emit digest.sent event back to NATS

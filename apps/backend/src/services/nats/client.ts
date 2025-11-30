@@ -36,23 +36,32 @@ export class NATSEventClient {
 
   /**
    * Fetch events from NATS since a specific timestamp using POST /api/events/query
+   * 
+   * @param lastUid - Last event UID processed (for filtering duplicates)
+   * @param fromTimestamp - Start timestamp for the time range (will be used as 'from')
+   * @param filters - Optional filters (accountId, eventTypes, limit)
+   * @param toTimestamp - Optional end timestamp (defaults to now if not provided)
    */
   async fetchEventsSince(
     lastUid: string | null,
-    timestamp: number,
+    fromTimestamp: number,
     filters?: {
       accountId?: string;
       eventTypes?: string[];
       limit?: number;
-    }
+    },
+    toTimestamp?: number
   ): Promise<Event[]> {
     try {
+      // Use provided toTimestamp or current time
+      const toTime = toTimestamp || Date.now();
+      
       // Build request body for POST /api/events/query
       const requestBody: any = {
         filters: {},
         timeRange: {
-          from: new Date(timestamp).toISOString(),
-          // No 'to' specified - get all events from timestamp to now
+          from: new Date(fromTimestamp).toISOString(),
+          to: new Date(toTime).toISOString(), // Required by NATS API
         },
         limit: filters?.limit || 1000, // Use max limit to get as many events as possible
       };
