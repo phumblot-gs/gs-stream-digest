@@ -2,7 +2,7 @@ import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { createId } from '@paralleldrive/cuid2';
 
 // Applications table
-export const applications = sqliteTable('applications', {
+export const applications = sqliteTable('digest_applications', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   label: text('label').notNull(), // Display label (e.g., "GS Sourcing")
   value: text('value').notNull().unique(), // Filter value (e.g., "sourcing")
@@ -14,7 +14,7 @@ export const applications = sqliteTable('applications', {
 });
 
 // Event types table
-export const eventTypes = sqliteTable('event_types', {
+export const eventTypes = sqliteTable('digest_event_types', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   label: text('label').notNull(), // Display label (e.g., "Partage de fichier")
   value: text('value').notNull().unique(), // Filter value (e.g., "file.share")

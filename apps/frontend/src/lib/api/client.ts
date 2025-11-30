@@ -24,7 +24,7 @@ export class ApiClient {
     const response = await fetch(`/api${endpoint}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.body && { 'Content-Type': 'application/json' }),
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },

@@ -5,7 +5,7 @@ primary_region = 'cdg'  # Paris region
 [build]
 
 [env]
-  NODE_ENV = 'production'
+  NODE_ENV = 'staging'
   PORT = '3001'
 
 [http_service]

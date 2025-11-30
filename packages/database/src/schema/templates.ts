@@ -2,7 +2,7 @@ import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // Email templates for digests
-export const emailTemplates = sqliteTable('email_templates', {
+export const emailTemplates = sqliteTable('digest_email_templates', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),

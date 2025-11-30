@@ -186,6 +186,10 @@ const digestRoutes: FastifyPluginAsync = async (fastify) => {
       // Convert schedule config to cron expression
       const cronExpression = scheduleToCron(data.schedule);
 
+      // For PostgreSQL, let the database handle timestamps with default functions
+      // For SQLite, we need to provide timestamps
+      const isPostgreSQL = !!process.env.DATABASE_URL;
+
       // Create digest
       const digest = await db.insert(schema.digests).values({
         id: digestId,
@@ -201,8 +205,10 @@ const digestRoutes: FastifyPluginAsync = async (fastify) => {
         isActive: data.isActive ?? true,
         isPaused: data.isPaused ?? false,
         createdBy: request.user!.id,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        ...(isPostgreSQL ? {} : {
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
       }).returning();
 
       // Schedule the digest if active
@@ -255,9 +261,11 @@ const digestRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(403).send({ error: 'Access denied' });
       }
 
+      const isPostgreSQL = !!process.env.DATABASE_URL;
+
       // Build update data
       const updateData: any = {
-        updatedAt: new Date()
+        ...(isPostgreSQL ? {} : { updatedAt: new Date() }),
       };
 
       if (data.name !== undefined) updateData.name = data.name;

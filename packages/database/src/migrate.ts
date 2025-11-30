@@ -1,4 +1,5 @@
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import { migrate as migrateSqlite } from 'drizzle-orm/better-sqlite3/migrator';
+import { migrate as migratePostgres } from 'drizzle-orm/node-postgres/migrator';
 import { getDb } from './client';
 import * as path from 'path';
 
@@ -7,9 +8,17 @@ async function runMigrations() {
 
   try {
     const db = getDb();
-    const migrationsFolder = path.join(__dirname, 'migrations');
+    const isPostgres = !!process.env.DATABASE_URL;
 
-    migrate(db, { migrationsFolder });
+    if (isPostgres) {
+      console.log('[Migrations] Using PostgreSQL migrations from migrations-pg/');
+      const migrationsFolder = path.join(__dirname, 'migrations-pg');
+      await migratePostgres(db, { migrationsFolder });
+    } else {
+      console.log('[Migrations] Using SQLite migrations from migrations/');
+      const migrationsFolder = path.join(__dirname, 'migrations');
+      migrateSqlite(db, { migrationsFolder });
+    }
 
     console.log('✅ Migrations completed successfully');
   } catch (error) {

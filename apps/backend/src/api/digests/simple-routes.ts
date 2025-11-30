@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { db, digests, digestTemplates } from '@gs-digest/database';
+import { getDb, digests, digestTemplates } from '@gs-digest/database';
 import { eq, desc, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { EmailSender } from '../../services/email/sender';
@@ -29,6 +29,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   // List all digests
   fastify.get('/', async (request, reply) => {
     try {
+      const db = getDb();
       const allDigests = await db
         .select()
         .from(digests)
@@ -82,6 +83,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       const digestList = await db.select().from(digests)
         .where(eq(digests.id, id))
@@ -135,12 +137,17 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/', async (request, reply) => {
     try {
       const data = createDigestSchema.parse(request.body);
+      const db = getDb();
 
       // Normalize filters: convert sourceApplications to applications for backward compatibility
       const normalizedFilters = { ...data.filters };
       if (normalizedFilters.sourceApplications && !normalizedFilters.applications) {
         normalizedFilters.applications = normalizedFilters.sourceApplications;
       }
+
+      // For PostgreSQL, let the database handle timestamps with default functions
+      // For SQLite, we need to provide timestamps
+      const isPostgreSQL = !!process.env.DATABASE_URL;
 
       const digest: any = {
         id: randomUUID(),
@@ -155,13 +162,20 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         templateId: data.templateId,
         isActive: data.isActive,
         createdBy: 'system', // TODO: Get from auth
-        createdAt: new Date(),
-        updatedAt: new Date()
+        ...(isPostgreSQL ? {} : {
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
       };
 
       await db.insert(digests).values(digest);
 
-      return reply.status(201).send(digest);
+      // Fetch the created record to get the database-generated timestamps
+      const [created] = await db.select().from(digests)
+        .where(eq(digests.id, digest.id))
+        .limit(1);
+
+      return reply.status(201).send(created || digest);
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -177,6 +191,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateDigestSchema.parse(request.body);
+      const db = getDb();
 
       // Fetch existing digest
       const existingDigests = await db.select().from(digests)
@@ -187,9 +202,11 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Digest not found' });
       }
 
+      const isPostgreSQL = !!process.env.DATABASE_URL;
+
       // Prepare update data
       const updateData: any = {
-        updatedAt: new Date()
+        ...(isPostgreSQL ? {} : { updatedAt: new Date() }),
       };
 
       // Add fields from data, converting objects/arrays to JSON strings
@@ -214,9 +231,12 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         .set(updateData)
         .where(eq(digests.id, id));
 
-      const updatedDigest = { ...existingDigests[0], ...updateData };
+      // Fetch the updated record to get the database-generated timestamps
+      const [updated] = await db.select().from(digests)
+        .where(eq(digests.id, id))
+        .limit(1);
 
-      return reply.send(updatedDigest);
+      return reply.send(updated || { ...existingDigests[0], ...updateData });
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -231,6 +251,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       // Check if digest exists
       const existingDigests = await db.select().from(digests)
@@ -258,6 +279,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const { recipientEmail, limit = 10 } = request.body as { recipientEmail: string; limit?: number };
+      const db = getDb();
 
       // Get digest
       const digestList = await db.select().from(digests)
@@ -354,6 +376,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/:id/send', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       // Get digest
       const digestList = await db.select().from(digests)
@@ -364,7 +387,13 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Digest not found' });
       }
 
-      // TODO: Implement actual sending logic
+      // Import scheduler dynamically to avoid circular dependencies
+      const { DigestScheduler } = await import('../../services/scheduler');
+      const scheduler = new DigestScheduler();
+
+      // Trigger digest to run immediately
+      await scheduler.runDigestNow(id);
+
       return reply.send({
         success: true,
         message: 'Digest sent successfully',

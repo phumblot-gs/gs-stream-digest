@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { db, applications, eventTypes } from '@gs-digest/database';
+import { getDb, applications, eventTypes } from '@gs-digest/database';
 import { eq, desc, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
@@ -36,6 +36,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // List all applications
   fastify.get('/applications', async (request, reply) => {
     try {
+      const db = getDb();
       const apps = await db.select().from(applications)
         .orderBy(asc(applications.label));
       return reply.send(apps);
@@ -49,6 +50,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/applications/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
       const apps = await db.select().from(applications)
         .where(eq(applications.id, id))
         .limit(1);
@@ -68,19 +70,25 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/applications', async (request, reply) => {
     try {
       const data = createApplicationSchema.parse(request.body);
+      const db = getDb();
 
+      // Let Drizzle's default functions handle timestamps for both databases
       const app = {
         id: randomUUID(),
         ...data,
         description: data.description || null,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         createdBy: 'system', // TODO: Get from auth
       };
 
       await db.insert(applications).values(app);
-      return reply.status(201).send(app);
+
+      // Fetch the created record to get the database-generated timestamps
+      const [created] = await db.select().from(applications)
+        .where(eq(applications.id, app.id))
+        .limit(1);
+
+      return reply.status(201).send(created || app);
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -95,6 +103,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateApplicationSchema.parse(request.body);
+      const db = getDb();
 
       const apps = await db.select().from(applications)
         .where(eq(applications.id, id))
@@ -104,17 +113,17 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Application not found' });
       }
 
-      const updateData = {
-        ...data,
-        updatedAt: new Date(),
-      };
-
+      // Let the database handle updatedAt via triggers or default functions
       await db.update(applications)
-        .set(updateData)
+        .set(data)
         .where(eq(applications.id, id));
 
-      const updatedApp = { ...apps[0], ...updateData };
-      return reply.send(updatedApp);
+      // Fetch the updated record to get the database-generated timestamps
+      const [updated] = await db.select().from(applications)
+        .where(eq(applications.id, id))
+        .limit(1);
+
+      return reply.send(updated || { ...apps[0], ...data });
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -128,6 +137,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/applications/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       const apps = await db.select().from(applications)
         .where(eq(applications.id, id))
@@ -152,6 +162,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // List all event types
   fastify.get('/event-types', async (request, reply) => {
     try {
+      const db = getDb();
       const types = await db.select().from(eventTypes)
         .orderBy(asc(eventTypes.label));
       return reply.send(types);
@@ -165,6 +176,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/event-types/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
       const types = await db.select().from(eventTypes)
         .where(eq(eventTypes.id, id))
         .limit(1);
@@ -184,20 +196,26 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/event-types', async (request, reply) => {
     try {
       const data = createEventTypeSchema.parse(request.body);
+      const db = getDb();
 
+      // Let Drizzle's default functions handle timestamps for both databases
       const eventType = {
         id: randomUUID(),
         ...data,
         description: data.description || null,
         category: data.category || null,
         isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         createdBy: 'system', // TODO: Get from auth
       };
 
       await db.insert(eventTypes).values(eventType);
-      return reply.status(201).send(eventType);
+
+      // Fetch the created record to get the database-generated timestamps
+      const [created] = await db.select().from(eventTypes)
+        .where(eq(eventTypes.id, eventType.id))
+        .limit(1);
+
+      return reply.status(201).send(created || eventType);
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -212,6 +230,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateEventTypeSchema.parse(request.body);
+      const db = getDb();
 
       const types = await db.select().from(eventTypes)
         .where(eq(eventTypes.id, id))
@@ -221,17 +240,17 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Event type not found' });
       }
 
-      const updateData = {
-        ...data,
-        updatedAt: new Date(),
-      };
-
+      // Let the database handle updatedAt via triggers or default functions
       await db.update(eventTypes)
-        .set(updateData)
+        .set(data)
         .where(eq(eventTypes.id, id));
 
-      const updatedType = { ...types[0], ...updateData };
-      return reply.send(updatedType);
+      // Fetch the updated record to get the database-generated timestamps
+      const [updated] = await db.select().from(eventTypes)
+        .where(eq(eventTypes.id, id))
+        .limit(1);
+
+      return reply.send(updated || { ...types[0], ...data });
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -245,6 +264,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/event-types/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
+      const db = getDb();
 
       const types = await db.select().from(eventTypes)
         .where(eq(eventTypes.id, id))
