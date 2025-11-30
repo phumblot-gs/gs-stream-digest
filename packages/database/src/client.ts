@@ -2,15 +2,21 @@ import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3';
 import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
 import Database from 'better-sqlite3';
 import { Pool } from 'pg';
-import * as digestSchema from './schema/digests';
-import * as adminSchema from './schema/admin';
-import * as templateSchema from './schema/templates';
+import * as digestSchemaSqlite from './schema/digests';
+import * as adminSchemaSqlite from './schema/admin';
+import * as templateSchemaSqlite from './schema/templates';
+import * as digestSchemaPg from './schema-pg/digests';
+import * as adminSchemaPg from './schema-pg/admin';
+import * as templateSchemaPg from './schema-pg/templates';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const schema = { ...digestSchema, ...adminSchema, ...templateSchema };
+const schemaSqlite = { ...digestSchemaSqlite, ...adminSchemaSqlite, ...templateSchemaSqlite };
+const schemaPg = { ...digestSchemaPg, ...adminSchemaPg, ...templateSchemaPg };
 
-type DbInstance = ReturnType<typeof drizzleSqlite<typeof schema>> | ReturnType<typeof drizzlePostgres<typeof schema>>;
+type DbInstanceSqlite = ReturnType<typeof drizzleSqlite<typeof schemaSqlite>>;
+type DbInstancePg = ReturnType<typeof drizzlePostgres<typeof schemaPg>>;
+type DbInstance = DbInstanceSqlite | DbInstancePg;
 
 let db: DbInstance | null = null;
 let pgPool: Pool | null = null;
@@ -68,7 +74,7 @@ export function getDb() {
         connectionTimeoutMillis: 10000,
       });
 
-      db = drizzlePostgres(pgPool, { schema });
+      db = drizzlePostgres(pgPool, { schema: schemaPg });
       console.log('[Database] PostgreSQL connection pool established');
     } else {
       // Otherwise, use SQLite (for local development)
@@ -93,7 +99,7 @@ export function getDb() {
       // WAL mode for better concurrent access
       sqlite.pragma('journal_mode = WAL');
 
-      db = drizzleSqlite(sqlite, { schema });
+      db = drizzleSqlite(sqlite, { schema: schemaSqlite });
       console.log(`[Database] SQLite database connection established`);
     }
   } else {
@@ -103,4 +109,6 @@ export function getDb() {
   return db;
 }
 
+// Export appropriate schema based on environment
+const schema = process.env.DATABASE_URL ? schemaPg : schemaSqlite;
 export { schema };
