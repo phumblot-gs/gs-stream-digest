@@ -13,7 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "strict": false,
     "noImplicitAny": false,
-    "declaration": false,
+    "declaration": true,
     "declarationMap": false,
     "sourceMap": true
   },
