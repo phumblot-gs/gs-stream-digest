@@ -2,12 +2,6 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
-<<<<<<< Updated upstream
-// Try to load .env from project root (../../.env) or current directory
-const envPath = resolve(__dirname, '../../.env');
-config({ path: envPath });
-config(); // Also load from current directory as fallback
-=======
 // Try to load .env from project root (../../../.env with tsx)
 const envPath = resolve(__dirname, '../../../.env');
 console.log(`[ENV] __dirname: ${__dirname}`);
@@ -33,7 +27,6 @@ if (!process.env.DATABASE_URL) {
 }
 
 // IMPORTANT: Import database functions AFTER env vars are loaded
->>>>>>> Stashed changes
 import { createServer } from './server';
 import { initializeSentry } from './utils/sentry';
 import { initializeAxiom } from './utils/axiom';
