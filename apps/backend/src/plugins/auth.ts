@@ -140,22 +140,63 @@ async function authPlugin(fastify: FastifyInstance) {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
 
+      logger.debug({
+        event: 'auth_jwt_attempt',
+        hasToken: !!token,
+        tokenLength: token.length,
+        tokenPrefix: token.substring(0, 20) + '...',
+      }, 'Attempting JWT authentication');
+
       try {
         // Verify JWT
         const decoded = await fastify.jwt.verify(token);
+        logger.debug({
+          event: 'auth_jwt_verified',
+          decoded: decoded ? 'present' : 'missing',
+        }, 'JWT verified successfully');
 
         // Get user from Supabase
-        const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(token);
+        const { data: { user: supabaseUser }, error: supabaseError } = await supabase.auth.getUser(token);
 
-        if (supabaseUser && !error) {
+        if (supabaseError) {
+          logger.warn({
+            event: 'auth_supabase_user_error',
+            error: supabaseError.message,
+          }, `Failed to get user from Supabase: ${supabaseError.message}`);
+        }
+
+        if (supabaseUser && !supabaseError) {
+          logger.debug({
+            event: 'auth_supabase_user_found',
+            userId: supabaseUser.id,
+            email: supabaseUser.email,
+          }, 'Supabase user found, fetching profile');
+
           // Get user profile from Supabase
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', supabaseUser.id)
             .single();
 
+          if (profileError) {
+            logger.warn({
+              event: 'auth_profile_error',
+              userId: supabaseUser.id,
+              error: profileError.message,
+            }, `Failed to get profile from Supabase: ${profileError.message}`);
+          }
+
           if (profile) {
+            logger.info({
+              event: 'auth_success',
+              userId: supabaseUser.id,
+              email: supabaseUser.email,
+              role: profile.role,
+              accountId: profile.account_id,
+              hasAccountId: !!profile.account_id,
+            }, `User authenticated: ${supabaseUser.email} (accountId: ${profile.account_id || 'MISSING'})`);
+
             request.user = {
               id: supabaseUser.id,
               email: supabaseUser.email!,
@@ -164,11 +205,35 @@ async function authPlugin(fastify: FastifyInstance) {
               accountIds: profile.role === 'superadmin' ? [] : undefined,
               metadata: profile
             };
+          } else {
+            logger.warn({
+              event: 'auth_profile_not_found',
+              userId: supabaseUser.id,
+            }, `Profile not found for user ${supabaseUser.id}`);
           }
+        } else {
+          logger.warn({
+            event: 'auth_supabase_user_not_found',
+            hasError: !!supabaseError,
+            error: supabaseError?.message,
+          }, 'Supabase user not found or error occurred');
         }
       } catch (error) {
-        logger.debug('JWT verification failed:', error);
+        logger.error({
+          event: 'auth_jwt_error',
+          error: error instanceof Error ? {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+          } : String(error),
+        }, 'JWT verification failed');
       }
+    } else {
+      logger.debug({
+        event: 'auth_no_bearer_token',
+        hasAuthHeader: !!authHeader,
+        authHeaderPrefix: authHeader ? authHeader.substring(0, 20) : 'none',
+      }, 'No Bearer token found in Authorization header');
     }
   });
 }

@@ -151,7 +151,24 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
       // Get accountId from authenticated user - REQUIRED
       const user = (request as any).user;
       
+      // Log authentication state for debugging
+      logger.info({
+        event: 'digest_creation_auth_check',
+        hasUser: !!user,
+        hasAuthHeader: !!request.headers.authorization,
+        authHeaderPrefix: request.headers.authorization ? request.headers.authorization.substring(0, 20) + '...' : 'none',
+        userId: user?.id,
+        userEmail: user?.email,
+        userAccountId: user?.accountId,
+      }, `Checking authentication for digest creation`);
+
       if (!user) {
+        logger.warn({
+          event: 'digest_creation_unauthorized',
+          hasAuthHeader: !!request.headers.authorization,
+          authHeaderPrefix: request.headers.authorization ? request.headers.authorization.substring(0, 20) + '...' : 'none',
+        }, 'Digest creation failed: user not authenticated');
+        
         return reply.status(401).send({ 
           error: 'Authentication required',
           message: 'You must be authenticated to create a digest'
