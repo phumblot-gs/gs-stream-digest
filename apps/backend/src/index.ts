@@ -5,14 +5,9 @@ import { resolve } from 'path';
 // Try to load .env from project root (../../../.env with tsx)
 const envPath = resolve(__dirname, '../../../.env');
 console.log(`[ENV] __dirname: ${__dirname}`);
-
-// Verify DATABASE_URL is set
-if (!process.env.DATABASE_URL) {
-  console.error('[ENV] ERROR: DATABASE_URL environment variable is required');
-  process.exit(1);
-}
-
 console.log(`[ENV] Attempting to load .env from: ${envPath}`);
+
+// Load .env FIRST before checking for DATABASE_URL
 const result = config({ path: envPath });
 if (result.error) {
   console.log(`[ENV] Failed to load from ${envPath}:`, result.error.message);
@@ -20,9 +15,10 @@ if (result.error) {
   console.log(`[ENV] Successfully loaded .env from ${envPath}`);
 }
 
-// Verify DATABASE_URL is still set after loading .env
+// Verify DATABASE_URL is set after loading .env
 if (!process.env.DATABASE_URL) {
   console.error('[ENV] ERROR: DATABASE_URL must be set in environment or .env file');
+  console.error('[ENV] Checked path:', envPath);
   process.exit(1);
 }
 
