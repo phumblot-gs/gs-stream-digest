@@ -56,6 +56,22 @@ export class NATSEventClient {
       // Use provided toTimestamp or current time
       const toTime = toTimestamp || Date.now();
       
+      // Validate and set limit - ensure it's a valid positive integer
+      // Default to 100 as suggested by NATS project
+      let limit = 100;
+      if (filters?.limit !== undefined && filters?.limit !== null) {
+        const parsedLimit = parseInt(String(filters.limit), 10);
+        if (!isNaN(parsedLimit) && parsedLimit > 0) {
+          limit = parsedLimit;
+        } else {
+          logger.warn({
+            event: 'nats_invalid_limit',
+            providedLimit: filters.limit,
+            limitType: typeof filters.limit,
+          }, `Invalid limit value: ${filters.limit}, using default: 100`);
+        }
+      }
+      
       // Build request body for POST /api/events/query
       const requestBody: any = {
         filters: {},
@@ -63,7 +79,7 @@ export class NATSEventClient {
           from: new Date(fromTimestamp).toISOString(),
           to: new Date(toTime).toISOString(), // Required by NATS API
         },
-        limit: filters?.limit || 1000, // Use max limit to get as many events as possible
+        limit: limit, // Always a valid positive integer
       };
 
       // Add account filter (only if accountId is valid, not 'default', null, or empty)
