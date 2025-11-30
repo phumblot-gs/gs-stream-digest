@@ -201,11 +201,8 @@ const digestRoutes: FastifyPluginAsync = async (fastify) => {
         isActive: data.isActive ?? true,
         isPaused: data.isPaused ?? false,
         createdBy: request.user!.id,
-<<<<<<< Updated upstream
         createdAt: new Date(),
-        updatedAt: new Date()
-=======
->>>>>>> Stashed changes
+        updatedAt: new Date(),
       }).returning();
 
       // Schedule the digest if active
