@@ -167,11 +167,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-<<<<<<< Updated upstream
-=======
       // PostgreSQL handles timestamps with default functions
-
->>>>>>> Stashed changes
       const template: any = {
         id: randomUUID(),
         accountId: 'default', // TODO: Get from auth
@@ -183,11 +179,8 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         isGlobal: data.isGlobal,
         isDefault: data.isDefault,
         createdBy: 'system', // TODO: Get from auth
-<<<<<<< Updated upstream
         createdAt: new Date(),
-        updatedAt: new Date()
-=======
->>>>>>> Stashed changes
+        updatedAt: new Date(),
       };
 
       // Handle previewData JSON serialization if provided
@@ -225,13 +218,9 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Prepare update data - only include non-undefined fields
-<<<<<<< Updated upstream
       const updateData: any = {
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-=======
-      const updateData: any = {};
->>>>>>> Stashed changes
 
       // Add fields from data, filtering out undefined values
       if (data.name !== undefined) updateData.name = data.name;
