@@ -145,6 +145,10 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         normalizedFilters.applications = normalizedFilters.sourceApplications;
       }
 
+      // For PostgreSQL, let the database handle timestamps with default functions
+      // For SQLite, we need to provide timestamps
+      const isPostgreSQL = !!process.env.DATABASE_URL;
+
       const digest: any = {
         id: randomUUID(),
         accountId: 'default', // TODO: Get from auth
@@ -158,13 +162,20 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         templateId: data.templateId,
         isActive: data.isActive,
         createdBy: 'system', // TODO: Get from auth
-        createdAt: new Date(),
-        updatedAt: new Date()
+        ...(isPostgreSQL ? {} : {
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
       };
 
       await db.insert(digests).values(digest);
 
-      return reply.status(201).send(digest);
+      // Fetch the created record to get the database-generated timestamps
+      const [created] = await db.select().from(digests)
+        .where(eq(digests.id, digest.id))
+        .limit(1);
+
+      return reply.status(201).send(created || digest);
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -191,9 +202,11 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Digest not found' });
       }
 
+      const isPostgreSQL = !!process.env.DATABASE_URL;
+
       // Prepare update data
       const updateData: any = {
-        updatedAt: new Date()
+        ...(isPostgreSQL ? {} : { updatedAt: new Date() }),
       };
 
       // Add fields from data, converting objects/arrays to JSON strings
@@ -218,9 +231,12 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         .set(updateData)
         .where(eq(digests.id, id));
 
-      const updatedDigest = { ...existingDigests[0], ...updateData };
+      // Fetch the updated record to get the database-generated timestamps
+      const [updated] = await db.select().from(digests)
+        .where(eq(digests.id, id))
+        .limit(1);
 
-      return reply.send(updatedDigest);
+      return reply.send(updated || { ...existingDigests[0], ...updateData });
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {

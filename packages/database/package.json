@@ -7,10 +7,12 @@
     "db:generate": "drizzle-kit generate",
     "db:generate:pg": "drizzle-kit generate --config=drizzle.config.pg.ts",
     "db:migrate": "tsx src/migrate.ts",
+    "db:migrate:pg": "tsx src/migrate-pg.ts",
     "db:push": "drizzle-kit push",
     "db:push:pg": "drizzle-kit push --config=drizzle.config.pg.ts",
     "db:studio": "drizzle-kit studio",
     "db:studio:pg": "drizzle-kit studio --config=drizzle.config.pg.ts",
+    "db:seed": "tsx src/seed.ts",
     "build": "tsc"
   },
   "dependencies": {

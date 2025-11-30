@@ -25,6 +25,10 @@ const webhookRoutes: FastifyPluginAsync = async (fastify) => {
         // Verify webhook signature (if configured)
         // TODO: Add webhook signature verification
 
+        // For PostgreSQL, let the database handle timestamps with default functions
+        // For SQLite, we need to provide timestamps
+        const isPostgreSQL = !!process.env.DATABASE_URL;
+
         // Store webhook event
         await db.insert(schema.webhookEvents).values({
           id: event.id || nanoid(),
@@ -32,7 +36,7 @@ const webhookRoutes: FastifyPluginAsync = async (fastify) => {
           eventId: event.id,
           resendId: event.data?.email_id,
           payload: JSON.stringify(event),
-          receivedAt: new Date()
+          ...(isPostgreSQL ? {} : { receivedAt: new Date() }),
         });
 
         // Update email status
