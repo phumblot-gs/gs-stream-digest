@@ -6,6 +6,17 @@ export { digests, digestTemplates, digestRuns, emailLogs, apiKeys, webhookEvents
 export { applications, eventTypes } from './schema-pg/admin';
 export { emailTemplates, emailTemplates as templates } from './schema-pg/templates';
 
+// Export schema object for convenience (used in some files)
+import * as digestSchemas from './schema-pg/digests';
+import * as adminSchemas from './schema-pg/admin';
+import * as templateSchemas from './schema-pg/templates';
+
+export const schema = {
+  ...digestSchemas,
+  ...adminSchemas,
+  ...templateSchemas,
+};
+
 // Export types from PostgreSQL schemas now that we're using them
 export type { Digest, NewDigest, DigestTemplate, NewDigestTemplate, DigestRun, NewDigestRun, EmailLog, NewEmailLog, ApiKey, NewApiKey, WebhookEvent, NewWebhookEvent } from './schema-pg/digests';
 export type { Application, EventType, NewApplication, NewEventType } from './schema-pg/admin';
