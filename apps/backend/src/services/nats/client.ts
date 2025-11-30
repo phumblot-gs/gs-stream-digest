@@ -57,9 +57,28 @@ export class NATSEventClient {
         limit: filters?.limit || 1000, // Use max limit to get as many events as possible
       };
 
-      // Add account filter (only if accountId is valid, not 'default' or empty)
-      if (filters?.accountId && filters.accountId !== 'default' && filters.accountId.trim() !== '') {
+      // Add account filter (only if accountId is valid, not 'default', null, or empty)
+      if (filters?.accountId && 
+          filters.accountId !== 'default' && 
+          filters.accountId !== null && 
+          filters.accountId !== undefined &&
+          String(filters.accountId).trim() !== '') {
         requestBody.filters.accountIds = [filters.accountId];
+        logger.info({
+          event: 'nats_filter_account',
+          accountId: filters.accountId,
+        }, `Adding accountId filter: ${filters.accountId}`);
+      } else {
+        logger.info({
+          event: 'nats_skip_account_filter',
+          accountId: filters?.accountId,
+          accountIdType: typeof filters?.accountId,
+          reason: !filters?.accountId ? 'no_accountId' : 
+                  filters.accountId === 'default' ? 'is_default' : 
+                  filters.accountId === null ? 'is_null' : 
+                  filters.accountId === undefined ? 'is_undefined' : 
+                  'is_empty',
+        }, `Skipping accountId filter (value: ${filters?.accountId}, type: ${typeof filters?.accountId})`);
       }
 
       // Add event types filter

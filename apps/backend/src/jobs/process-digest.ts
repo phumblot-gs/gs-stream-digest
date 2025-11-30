@@ -133,6 +133,16 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
     try {
       const filters = JSON.parse(digest.filters) as EventFilters;
 
+      // Log digest accountId for debugging
+      logger.info({
+        event: 'digest_fetch_events',
+        digestId: digest.id,
+        digestAccountId: digest.accountId,
+        accountIdType: typeof digest.accountId,
+        accountIdIsDefault: digest.accountId === 'default',
+        accountIdIsNull: digest.accountId === null,
+      }, `Fetching events for digest ${digest.id} with accountId: ${digest.accountId}`);
+
       // Fetch raw events
       const rawEvents = await natsClient.fetchEventsSince(
         digest.lastEventUid,
