@@ -1,46 +1,37 @@
-import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3';
-import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
+<<<<<<< Updated upstream
+import { drizzle } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
-import { Pool } from 'pg';
-import * as digestSchemaSqlite from './schema/digests';
-import * as adminSchemaSqlite from './schema/admin';
-import * as templateSchemaSqlite from './schema/templates';
-import * as digestSchemaPg from './schema-pg/digests';
-import * as adminSchemaPg from './schema-pg/admin';
-import * as templateSchemaPg from './schema-pg/templates';
+import * as digestSchema from './schema/digests';
+import * as adminSchema from './schema/admin';
+import * as templateSchema from './schema/templates';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const schemaSqlite = { ...digestSchemaSqlite, ...adminSchemaSqlite, ...templateSchemaSqlite };
+const schema = { ...digestSchema, ...adminSchema, ...templateSchema };
+
+let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
+
+export function getDb() {
+  if (!db) {
+    const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'digest.db');
+
+    // Ensure directory exists
+    const dir = path.dirname(dbPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+=======
+import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import * as digestSchemaPg from './schema-pg/digests';
+import * as adminSchemaPg from './schema-pg/admin';
+import * as templateSchemaPg from './schema-pg/templates';
+
 const schemaPg = { ...digestSchemaPg, ...adminSchemaPg, ...templateSchemaPg };
 
-type DbInstanceSqlite = ReturnType<typeof drizzleSqlite<typeof schemaSqlite>>;
 type DbInstancePg = ReturnType<typeof drizzlePostgres<typeof schemaPg>>;
-type DbInstance = DbInstanceSqlite | DbInstancePg;
 
-let db: DbInstance | null = null;
+let db: DbInstancePg | null = null;
 let pgPool: Pool | null = null;
-
-// Find monorepo root by looking for package.json with workspaces
-function findMonorepoRoot(): string {
-  let currentDir = process.cwd();
-  while (currentDir !== '/') {
-    const packageJsonPath = path.join(currentDir, 'package.json');
-    if (fs.existsSync(packageJsonPath)) {
-      try {
-        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-        if (packageJson.workspaces) {
-          return currentDir;
-        }
-      } catch {
-        // Continue searching
-      }
-    }
-    currentDir = path.dirname(currentDir);
-  }
-  // Fallback to process.cwd() if not found
-  return process.cwd();
-}
 
 // Force reset the database connection (for use after env loading)
 export function resetDb() {
@@ -57,15 +48,26 @@ export function resetDb() {
 export function getDb() {
   if (!db) {
     const databaseUrl = process.env.DATABASE_URL;
-    const databasePath = process.env.DATABASE_PATH;
+
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL environment variable is required. PostgreSQL connection string must be provided.');
+    }
+
+    // Extract hostname for logging (without exposing full URL)
+    let hostname = '[UNKNOWN]';
+    try {
+      const parsed = new URL(databaseUrl);
+      hostname = parsed.hostname || '[INVALID URL]';
+    } catch {
+      hostname = '[INVALID URL]';
+    }
 
     console.log(`[Database] getDb() called from:`, new Error().stack?.split('\n')[2]);
-    console.log(`[Database] DATABASE_URL env var: ${databaseUrl ? '[SET]' : '[NOT SET]'}`);
-    console.log(`[Database] DATABASE_PATH env var: ${databasePath || '[NOT SET]'}`);
+    console.log(`[Database] DATABASE_URL env var: [SET]`);
+    console.log(`[Database] Database hostname: ${hostname}`);
+    console.log('[Database] Using PostgreSQL');
 
-    // If DATABASE_URL is set, use PostgreSQL
-    if (databaseUrl) {
-      console.log('[Database] Using PostgreSQL');
+    try {
       pgPool = new Pool({
         connectionString: databaseUrl,
         // Connection pool settings
@@ -76,39 +78,35 @@ export function getDb() {
 
       db = drizzlePostgres(pgPool, { schema: schemaPg });
       console.log('[Database] PostgreSQL connection pool established');
-    } else {
-      // Otherwise, use SQLite (for local development)
-      console.log('[Database] Using SQLite');
-      const monorepoRoot = findMonorepoRoot();
-      const dbPath = databasePath || path.join(monorepoRoot, 'data', 'digest.db');
-      console.log(`[Database] Monorepo root: ${monorepoRoot}`);
-      console.log(`[Database] Final database path: ${dbPath}`);
-
-      // Ensure directory exists
-      const dir = path.dirname(dbPath);
-      if (!fs.existsSync(dir)) {
-        console.log(`[Database] Creating directory: ${dir}`);
-        fs.mkdirSync(dir, { recursive: true });
-      }
-
-      const sqlite = new Database(dbPath);
-
-      // Enable foreign keys
-      sqlite.pragma('foreign_keys = ON');
-
-      // WAL mode for better concurrent access
-      sqlite.pragma('journal_mode = WAL');
-
-      db = drizzleSqlite(sqlite, { schema: schemaSqlite });
-      console.log(`[Database] SQLite database connection established`);
+      
+      // Test connection immediately
+      pgPool.on('error', (err) => {
+        console.error('[Database] Unexpected error on idle PostgreSQL client:', err);
+      });
+    } catch (error) {
+      console.error('[Database] Failed to create PostgreSQL connection pool:', error);
+      throw error;
+>>>>>>> Stashed changes
     }
-  } else {
-    console.log(`[Database] Reusing existing database connection`);
+
+    const sqlite = new Database(dbPath);
+
+    // Enable foreign keys
+    sqlite.pragma('foreign_keys = ON');
+
+    // WAL mode for better concurrent access
+    sqlite.pragma('journal_mode = WAL');
+
+    db = drizzle(sqlite, { schema });
   }
 
   return db;
 }
 
-// Export appropriate schema based on environment
-const schema = process.env.DATABASE_URL ? schemaPg : schemaSqlite;
+<<<<<<< Updated upstream
 export { schema };
+=======
+// Export PostgreSQL schema
+const schema = schemaPg;
+export { schema };
+>>>>>>> Stashed changes

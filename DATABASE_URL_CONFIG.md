@@ -61,7 +61,8 @@ Après avoir défini les secrets, l'application redémarrera automatiquement et 
 
 ## Notes importantes
 
+- **PostgreSQL est maintenant obligatoire** : L'application utilise uniquement PostgreSQL. `DATABASE_URL` doit être défini.
 - Les hostnames `.svc` ne sont accessibles que depuis l'intérieur du réseau Fly.io
-- Le client de base de données ([packages/database/src/client.ts](/Users/phf/grandshooting/gs-stream-digest/packages/database/src/client.ts:51)) détecte automatiquement `DATABASE_URL` et utilise PostgreSQL
-- Si `DATABASE_URL` n'est pas défini, l'application utilise SQLite pour le développement local
+- Le client de base de données ([packages/database/src/client.ts](/Users/phf/grandshooting/gs-stream-digest/packages/database/src/client.ts)) utilise uniquement PostgreSQL
 - Le schéma PostgreSQL avec les 9 tables `digest_*` a déjà été créé et les permissions configurées
+- **SQLite a été complètement supprimé** du projet

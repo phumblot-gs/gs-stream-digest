@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { getDb, digestTemplates, digests } from '@gs-digest/database';
+import { db, digestTemplates, digests } from '@gs-digest/database';
 import { eq, desc, sql } from 'drizzle-orm';
 import { EmailRenderer } from '@gs-digest/email-templates';
 import { randomUUID } from 'crypto';
@@ -34,7 +34,6 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   // List all templates with digest count
   fastify.get('/', async (request, reply) => {
     try {
-      const db = getDb();
       // Get all templates
       const allTemplates = await db
         .select()
@@ -76,7 +75,6 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const db = getDb();
 
       const templates = await db.select().from(digestTemplates)
         .where(eq(digestTemplates.id, id))
@@ -97,7 +95,6 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id/digests', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const db = getDb();
 
       // Check if template exists
       const template = await db.select().from(digestTemplates)
@@ -154,7 +151,6 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/', async (request, reply) => {
     try {
       const data = createTemplateSchema.parse(request.body);
-      const db = getDb();
 
       // Validate Liquid syntax
       const renderer = new EmailRenderer();
@@ -171,10 +167,11 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      // For PostgreSQL, let the database handle timestamps with default functions
-      // For SQLite, we need to provide timestamps
-      const isPostgreSQL = !!process.env.DATABASE_URL;
+<<<<<<< Updated upstream
+=======
+      // PostgreSQL handles timestamps with default functions
 
+>>>>>>> Stashed changes
       const template: any = {
         id: randomUUID(),
         accountId: 'default', // TODO: Get from auth
@@ -186,10 +183,11 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         isGlobal: data.isGlobal,
         isDefault: data.isDefault,
         createdBy: 'system', // TODO: Get from auth
-        ...(isPostgreSQL ? {} : {
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+<<<<<<< Updated upstream
+        createdAt: new Date(),
+        updatedAt: new Date()
+=======
+>>>>>>> Stashed changes
       };
 
       // Handle previewData JSON serialization if provided
@@ -201,12 +199,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
 
       await db.insert(digestTemplates).values(template);
 
-      // Fetch the created record to get the database-generated timestamps
-      const [created] = await db.select().from(digestTemplates)
-        .where(eq(digestTemplates.id, template.id))
-        .limit(1);
-
-      return reply.status(201).send(created || template);
+      return reply.status(201).send(template);
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -221,7 +214,6 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
       const data = updateTemplateSchema.parse(request.body);
-      const db = getDb();
 
       // Fetch existing template
       const templates = await db.select().from(digestTemplates)
@@ -232,12 +224,14 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Template not found' });
       }
 
-      const isPostgreSQL = !!process.env.DATABASE_URL;
-
       // Prepare update data - only include non-undefined fields
+<<<<<<< Updated upstream
       const updateData: any = {
-        ...(isPostgreSQL ? {} : { updatedAt: new Date() }),
+        updatedAt: new Date()
       };
+=======
+      const updateData: any = {};
+>>>>>>> Stashed changes
 
       // Add fields from data, filtering out undefined values
       if (data.name !== undefined) updateData.name = data.name;
@@ -281,12 +275,9 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         .set(updateData)
         .where(eq(digestTemplates.id, id));
 
-      // Fetch the updated record to get the database-generated timestamps
-      const [updated] = await db.select().from(digestTemplates)
-        .where(eq(digestTemplates.id, id))
-        .limit(1);
+      const updatedTemplate = { ...templates[0], ...updateData };
 
-      return reply.send(updated || { ...templates[0], ...updateData });
+      return reply.send(updatedTemplate);
     } catch (error) {
       fastify.log.error(error);
       if (error instanceof z.ZodError) {
@@ -300,7 +291,6 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const db = getDb();
 
       // Fetch existing template
       const templates = await db.select().from(digestTemplates)

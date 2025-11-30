@@ -34,11 +34,8 @@ primary_region = 'cdg'  # Paris region
     hard_limit = 25
     soft_limit = 20
 
-# Volume persistant pour la base de données SQLite
-[[mounts]]
-  source = 'gs_digest_staging_data'
-  destination = '/app/apps/backend/data'
-  initial_size = '1gb'
+# Note: PostgreSQL is used via DATABASE_URL secret (managed PostgreSQL cluster)
+# No volume mount needed for database storage
 
 [[vm]]
   size = 'shared-cpu-1x'

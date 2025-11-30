@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
+import { logger } from '@/lib/logger';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,6 +17,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Log startup information (only on server side)
+  if (typeof window === 'undefined') {
+    logger.logStartup();
+  }
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className}>
