@@ -8,7 +8,8 @@ export function initializeAxiom(): Axiom | null {
   const token = process.env.AXIOM_API_KEY || process.env.AXIOM_TOKEN;
 
   if (!token) {
-    logger.warn('AXIOM_API_KEY not configured, Axiom logging disabled');
+    console.warn('[Axiom] AXIOM_API_KEY not configured, Axiom logging disabled');
+    console.warn('[Axiom] Available env vars:', Object.keys(process.env).filter(k => k.includes('AXIOM')));
     return null;
   }
 
@@ -27,20 +28,24 @@ export function initializeAxiom(): Axiom | null {
       token,
     });
 
-    logger.info({ 
-      event: 'axiom_initialized',
-      dataset,
+    console.log(`[Axiom] ✅ Initialized with dataset: ${dataset}, env: ${env}`);
+    console.log(`[Axiom] Token length: ${token.length} chars`);
+    
+    // Test connection by sending a test log
+    axiom.ingest(dataset, [{
+      _time: new Date().toISOString(),
+      event: 'axiom_test',
+      message: 'Axiom connection test',
       env,
-      hasToken: !!token,
-      tokenLength: token?.length || 0,
-    }, `Axiom initialized with dataset: ${dataset}`);
+    }]).then(() => {
+      console.log(`[Axiom] ✅ Test log sent successfully to ${dataset}`);
+    }).catch((err) => {
+      console.error(`[Axiom] ❌ Failed to send test log:`, err);
+    });
     
     return axiom;
   } catch (error) {
-    logger.error({ 
-      event: 'axiom_init_failed',
-      error: error instanceof Error ? error.message : String(error),
-    }, 'Failed to initialize Axiom');
+    console.error('[Axiom] ❌ Failed to initialize:', error);
     return null;
   }
 }
