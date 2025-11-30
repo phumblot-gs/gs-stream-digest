@@ -23,7 +23,10 @@
       "Bash(flyctl machine stop:*)",
       "Bash(flyctl machine start:*)",
       "Bash(git commit:*)",
-      "Bash(flyctl machine status:*)"
+      "Bash(flyctl machine status:*)",
+      "Bash(flyctl secrets list:*)",
+      "Bash(flyctl postgres connect:*)",
+      "Bash(flyctl apps:*)"
     ],
     "deny": [],
     "ask": []

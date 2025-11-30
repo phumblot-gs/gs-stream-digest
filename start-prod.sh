@@ -14,7 +14,8 @@ echo "🔧 Starting backend on port 3000..."
 cd /app/apps/backend
 export DATABASE_PATH=/app/apps/backend/data/digest.db
 export PORT=3000
-npm start > /tmp/backend.log 2>&1 &
+# Use start:dev temporarily until we have proper TypeScript compilation
+npm run start:dev > /tmp/backend.log 2>&1 &
 BACKEND_PID=$!
 
 # Wait for backend to be ready

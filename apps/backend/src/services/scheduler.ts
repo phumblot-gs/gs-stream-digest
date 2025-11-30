@@ -19,23 +19,10 @@ export class DigestScheduler {
   private pool: Piscina;
 
   constructor() {
-    // Only use Piscina in production where we have compiled .js files
-    // In development, we'll execute jobs directly to avoid TypeScript loading issues in worker threads
-    if (process.env.NODE_ENV === 'production') {
-      const workerPath = path.join(__dirname, '../jobs/process-digest.js');
-      this.pool = new Piscina({
-        filename: workerPath,
-        minThreads: 1,
-        maxThreads: 5,
-        idleTimeout: 60000 // 1 minute
-      });
-      logger.info(`Worker pool initialized with ${workerPath}`);
-    } else {
-      // In development, create a dummy pool that won't be used
-      // We'll execute jobs directly via dynamic import
-      this.pool = null as any; // Will check for null before using
-      logger.info('Development mode: executing jobs directly without worker pool');
-    }
+    // Disable Piscina worker pool temporarily - we're running with tsx which doesn't compile .js files
+    // TODO: Enable this when we properly compile TypeScript to JavaScript in production
+    this.pool = null as any;
+    logger.info('Worker pool disabled - executing jobs directly');
   }
 
   async initialize() {
@@ -183,9 +170,9 @@ export class DigestScheduler {
           runType
         });
       } else {
-        // Development: execute directly without workers
-        // In development, tsx allows importing .ts files directly
-        const processDigest = (await import('../jobs/process-digest.ts')).default;
+        // Execute directly without workers (both dev and prod for now)
+        // Dynamic import without .ts extension
+        const processDigest = (await import('../jobs/process-digest')).default;
         result = await processDigest({
           digestId,
           runType
