@@ -136,7 +136,7 @@ async function authPlugin(fastify: FastifyInstance) {
       }
     }
 
-    // Check for Bearer token (JWT)
+    // Check for Bearer token (JWT from Supabase)
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
 
@@ -145,17 +145,12 @@ async function authPlugin(fastify: FastifyInstance) {
         hasToken: !!token,
         tokenLength: token.length,
         tokenPrefix: token.substring(0, 20) + '...',
-      }, 'Attempting JWT authentication');
+      }, 'Attempting Supabase JWT authentication');
 
       try {
-        // Verify JWT
-        const decoded = await fastify.jwt.verify(token);
-        logger.debug({
-          event: 'auth_jwt_verified',
-          decoded: decoded ? 'present' : 'missing',
-        }, 'JWT verified successfully');
-
-        // Get user from Supabase
+        // IMPORTANT: Don't verify with Fastify JWT - Supabase tokens are signed with Supabase's secret
+        // Instead, verify directly with Supabase which will validate the token signature
+        // Get user from Supabase (this also verifies the token signature)
         const { data: { user: supabaseUser }, error: supabaseError } = await supabase.auth.getUser(token);
 
         if (supabaseError) {
