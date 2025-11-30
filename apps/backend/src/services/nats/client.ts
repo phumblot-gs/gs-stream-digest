@@ -105,7 +105,8 @@ export class NATSEventClient {
         requestBody,
         method: 'POST',
         lastUid,
-        timestamp: new Date(timestamp).toISOString()
+        fromTimestamp: new Date(fromTimestamp).toISOString(),
+        toTimestamp: new Date(toTime).toISOString()
       }, `Fetching events from NATS: ${url}`);
 
       const response = await fetch(url, {
@@ -205,14 +206,16 @@ export class NATSEventClient {
         count: events.length,
         pagesFetched: pageCount,
         lastUid,
-        timestamp: new Date(timestamp).toISOString()
+        fromTimestamp: new Date(fromTimestamp).toISOString(),
+        toTimestamp: new Date(toTime).toISOString()
       }, `Fetched ${events.length} events from NATS (${pageCount} page(s))`);
 
       await logEvent('nats.events_fetched', {
         count: events.length,
         pagesFetched: pageCount,
         lastUid,
-        timestamp: new Date(timestamp).toISOString(),
+        fromTimestamp: new Date(fromTimestamp).toISOString(),
+        toTimestamp: new Date(toTime).toISOString(),
         filters
       });
 
@@ -222,7 +225,8 @@ export class NATSEventClient {
       await logEvent('nats.fetch_error', {
         error: error instanceof Error ? error.message : 'Unknown error',
         lastUid,
-        timestamp: new Date(timestamp).toISOString(),
+        fromTimestamp: new Date(fromTimestamp).toISOString(),
+        toTimestamp: new Date(toTime).toISOString(),
         filters
       });
       throw error;
