@@ -16,37 +16,36 @@ export function initializeAxiom(): Axiom | null {
   // Determine dataset with priority:
   // 1. Explicit AXIOM_DATASET env var (highest priority)
   // 2. FLY_APP_NAME (most reliable on Fly.io - contains staging/production)
-  // 3. NODE_ENV (fallback)
+  // 3. NODE_ENV (fallback for local development)
   if (process.env.AXIOM_DATASET) {
     dataset = process.env.AXIOM_DATASET;
     console.log(`[Axiom] Using explicit AXIOM_DATASET: ${dataset}`);
-  } else {
-    // Check FLY_APP_NAME first (most reliable on Fly.io)
+  } else if (process.env.FLY_APP_NAME) {
+    // On Fly.io, use FLY_APP_NAME to determine environment
     // staging app: 'gs-stream-digest-staging' → 'gs-staging'
     // production app: 'gs-stream-digest' → 'gs-production'
-    const flyAppName = process.env.FLY_APP_NAME || '';
+    const flyAppName = process.env.FLY_APP_NAME;
     const appNameLower = flyAppName.toLowerCase();
     
     if (appNameLower.includes('staging')) {
       dataset = 'gs-staging';
       console.log(`[Axiom] Detected staging from FLY_APP_NAME: ${flyAppName} → dataset: ${dataset}`);
-    } else if (appNameLower.includes('production') || appNameLower.includes('prod') || (flyAppName && !appNameLower.includes('staging'))) {
-      // If FLY_APP_NAME exists and doesn't contain 'staging', assume production
-      // This handles the case where production app is just 'gs-stream-digest'
+    } else {
+      // Production app name is 'gs-stream-digest' (no staging suffix)
       dataset = 'gs-production';
       console.log(`[Axiom] Detected production from FLY_APP_NAME: ${flyAppName} → dataset: ${dataset}`);
-    } else {
-      // Fallback to NODE_ENV
-      const env = process.env.NODE_ENV || 'development';
-      if (env === 'production') {
-        dataset = 'gs-production';
-      } else if (env === 'staging') {
-        dataset = 'gs-staging';
-      } else {
-        dataset = 'gs-dev';
-      }
-      console.log(`[Axiom] Using NODE_ENV fallback: ${env} → dataset: ${dataset}`);
     }
+  } else {
+    // Local development: use NODE_ENV
+    const env = process.env.NODE_ENV || 'development';
+    if (env === 'production') {
+      dataset = 'gs-production';
+    } else if (env === 'staging') {
+      dataset = 'gs-staging';
+    } else {
+      dataset = 'gs-dev';
+    }
+    console.log(`[Axiom] Using NODE_ENV (local dev): ${env} → dataset: ${dataset}`);
   }
 
   try {
