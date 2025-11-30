@@ -33,6 +33,7 @@ export default function TemplatesPage() {
   useEffect(() => {
     checkAuth();
     fetchTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkAuth = async () => {
@@ -127,7 +128,7 @@ export default function TemplatesPage() {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold">Templates d'Email</h1>
+                <h1 className="text-xl font-bold">Templates d&apos;Email</h1>
                 <p className="text-sm text-gray-600">Gérez vos templates de digest</p>
               </div>
             </div>
@@ -288,7 +289,7 @@ export default function TemplatesPage() {
                   <h3 className="font-semibold mb-2">Variables de contexte</h3>
                   <ul className="space-y-1 text-sm text-gray-600">
                     <li><code className="bg-gray-100 px-1">{'{{ digest.name }}'}</code> - Nom du digest</li>
-                    <li><code className="bg-gray-100 px-1">{'{{ eventsCount }}'}</code> - Nombre d\'événements</li>
+                    <li><code className="bg-gray-100 px-1">{'{{ eventsCount }}'}</code> - Nombre d&apos;événements</li>
                     <li><code className="bg-gray-100 px-1">{'{{ events }}'}</code> - Liste des événements</li>
                     <li><code className="bg-gray-100 px-1">{'{{ currentDate }}'}</code> - Date actuelle</li>
                     <li><code className="bg-gray-100 px-1">{'{{ recipientEmail }}'}</code> - Email du destinataire</li>

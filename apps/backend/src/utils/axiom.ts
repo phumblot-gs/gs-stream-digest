@@ -63,6 +63,7 @@ export async function logEvent(event: string, data: any) {
     ]);
     logger.debug(`Logged event to Axiom (${dataset}): ${event}`);
   } catch (error) {
-    logger.error(`Failed to log event to Axiom: ${event}`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error({ err: error }, `Failed to log event to Axiom: ${event} - ${errorMessage}`);
   }
 }

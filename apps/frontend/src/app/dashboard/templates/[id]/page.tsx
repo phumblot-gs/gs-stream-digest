@@ -335,7 +335,7 @@ export default function EditTemplatePage() {
               </Link>
               <div>
                 <h1 className="text-xl font-bold">Modifier le Template</h1>
-                <p className="text-sm text-gray-600">Modifiez votre template d'email</p>
+                <p className="text-sm text-gray-600">Modifiez votre template d&apos;email</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -444,7 +444,7 @@ export default function EditTemplatePage() {
 
                     <TabsContent value="subject">
                       <div>
-                        <Label htmlFor="subject">Sujet de l'email *</Label>
+                        <Label htmlFor="subject">Sujet de l&apos;email *</Label>
                         <Input
                           id="subject"
                           value={subjectLiquid}
@@ -453,7 +453,7 @@ export default function EditTemplatePage() {
                           required
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Utilisez {`{{ eventsCount }}`} pour le nombre d'événements
+                          Utilisez {`{{ eventsCount }}`} pour le nombre d&apos;événements
                         </p>
                       </div>
                     </TabsContent>
@@ -511,7 +511,7 @@ export default function EditTemplatePage() {
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle>Aperçu du template</DialogTitle>
             <DialogDescription>
-              Prévisualisation du rendu avec des données d'exemple
+              Prévisualisation du rendu avec des données d&apos;exemple
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto p-6">
@@ -547,7 +547,7 @@ export default function EditTemplatePage() {
               <div className="text-center py-12 text-gray-500">
                 <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Cliquez sur "Prévisualiser" pour voir le rendu</p>
-                <p className="text-sm mt-2">Le template sera rendu avec des données d'exemple</p>
+                <p className="text-sm mt-2">Le template sera rendu avec des données d&apos;exemple</p>
               </div>
             )}
           </div>

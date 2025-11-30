@@ -326,7 +326,7 @@ export default function MonitoringPage() {
         {/* Email Stats Card */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Statistiques d'emails (30 derniers jours)</CardTitle>
+            <CardTitle>Statistiques d&apos;emails (30 derniers jours)</CardTitle>
             <CardDescription>Vue d'ensemble des emails envoyés et leur statut</CardDescription>
           </CardHeader>
           <CardContent>

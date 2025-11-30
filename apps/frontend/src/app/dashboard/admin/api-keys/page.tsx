@@ -179,7 +179,7 @@ export default function ApiKeysAdminPage() {
               </Link>
               <div>
                 <h1 className="text-xl font-bold">Clés API</h1>
-                <p className="text-sm text-gray-600">Gérez les clés d'accès à l'API publique</p>
+                <p className="text-sm text-gray-600">Gérez les clés d&apos;accès à l&apos;API publique</p>
               </div>
             </div>
           </div>
@@ -193,7 +193,7 @@ export default function ApiKeysAdminPage() {
           <CardHeader>
             <CardTitle>Créer une nouvelle clé API</CardTitle>
             <CardDescription>
-              Les clés API permettent d'accéder à l'API publique en lecture seule
+              Les clés API permettent d&apos;accéder à l&apos;API publique en lecture seule
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -211,7 +211,7 @@ export default function ApiKeysAdminPage() {
                 <Label htmlFor="accountId">Account ID (optionnel)</Label>
                 <Input
                   id="accountId"
-                  placeholder="Laisser vide pour 'default'"
+                  placeholder="Laisser vide pour &apos;default&apos;"
                   value={newAccountId}
                   onChange={(e) => setNewAccountId(e.target.value)}
                 />
@@ -231,7 +231,7 @@ export default function ApiKeysAdminPage() {
           <CardHeader>
             <CardTitle>Clés API existantes ({apiKeys.length})</CardTitle>
             <CardDescription>
-              Les clés révoquées ne peuvent plus être utilisées pour accéder à l'API
+              Les clés révoquées ne peuvent plus être utilisées pour accéder à l&apos;API
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -351,10 +351,10 @@ export default function ApiKeysAdminPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Exemple d'utilisation</Label>
+                <Label>Exemple d&apos;utilisation</Label>
                 <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-3 overflow-x-auto">
                   <code className="text-sm font-mono">
-                    curl -H "X-API-Key: {newKeyData.apiKey}" \<br/>
+                    curl -H &quot;X-API-Key: {newKeyData.apiKey}&quot; \<br/>
                     &nbsp;&nbsp;https://digest-api.grand-shooting.com/api/v1/digests
                   </code>
                 </div>

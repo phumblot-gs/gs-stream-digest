@@ -382,7 +382,7 @@ export default function NewTemplatePage() {
               </Link>
               <div>
                 <h1 className="text-xl font-bold">Nouveau Template</h1>
-                <p className="text-sm text-gray-600">Créez un template d'email personnalisé</p>
+                <p className="text-sm text-gray-600">Créez un template d&apos;email personnalisé</p>
               </div>
             </div>
             <Button
@@ -492,7 +492,7 @@ export default function NewTemplatePage() {
                           required
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Utilisez {`{{ eventsCount }}`} pour le nombre d'événements
+                          Utilisez {`{{ eventsCount }}`} pour le nombre d&apos;événements
                         </p>
                       </div>
                     </TabsContent>
@@ -551,7 +551,7 @@ export default function NewTemplatePage() {
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle>Aperçu du template</DialogTitle>
             <DialogDescription>
-              Prévisualisation du rendu avec des données d'exemple
+              Prévisualisation du rendu avec des données d&apos;exemple
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto p-6">
@@ -587,7 +587,7 @@ export default function NewTemplatePage() {
               <div className="text-center py-12 text-gray-500">
                 <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Cliquez sur "Prévisualiser" pour voir le rendu</p>
-                <p className="text-sm mt-2">Le template sera rendu avec des données d'exemple</p>
+                <p className="text-sm mt-2">Le template sera rendu avec des données d&apos;exemple</p>
               </div>
             )}
           </div>
