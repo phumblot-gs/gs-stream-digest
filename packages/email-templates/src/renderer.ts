@@ -159,21 +159,78 @@ export class EmailRenderer {
     return path.split('.').reduce((current, part) => current?.[part], obj);
   }
 
+  /**
+   * Normalize events to ensure all properties exist and are safe for Liquid templates
+   */
+  private normalizeEvents(events: Event[]): Event[] {
+    return events.map(event => {
+      // Deep clone to avoid mutating original
+      const normalized: any = {
+        ...event,
+        data: event.data || {},
+        timestamp: event.timestamp || new Date().toISOString(),
+        uid: event.uid || '',
+        eventType: event.eventType || 'unknown',
+        accountId: event.accountId || ''
+      };
+
+      // Ensure data.sellers_shared exists and is an array (for file share events)
+      if (!normalized.data.sellers_shared) {
+        normalized.data.sellers_shared = [];
+      } else if (!Array.isArray(normalized.data.sellers_shared)) {
+        normalized.data.sellers_shared = [];
+      } else {
+        // Normalize each seller object
+        normalized.data.sellers_shared = normalized.data.sellers_shared.map((seller: any) => ({
+          account_name: seller?.account_name || 'undefined',
+          created_files_count: seller?.created_files_count ?? 0,
+          updated_files_count: seller?.updated_files_count ?? 0,
+          ...seller
+        }));
+      }
+
+      // Also ensure payload exists for backward compatibility (maps to data)
+      normalized.payload = normalized.data;
+
+      return normalized as Event;
+    });
+  }
+
+  /**
+   * Normalize context to ensure all properties are safe for Liquid templates
+   */
+  private normalizeContext(context: RenderContext): RenderContext {
+    return {
+      ...context,
+      events: this.normalizeEvents(context.events || []),
+      eventsCount: context.eventsCount || 0,
+      digest: {
+        name: context.digest?.name || 'undefined',
+        description: context.digest?.description || ''
+      },
+      now: context.now || new Date(),
+      accountId: context.accountId || ''
+    };
+  }
+
   async render(
     template: Pick<DigestTemplate, 'subjectLiquid' | 'bodyHtmlLiquid' | 'bodyTextLiquid'>,
     context: RenderContext
   ): Promise<RenderResult> {
     try {
+      // Normalize context to ensure all properties are safe
+      const normalizedContext = this.normalizeContext(context);
+
       // Render subject
-      const subject = await this.liquid.parseAndRender(template.subjectLiquid, context);
+      const subject = await this.liquid.parseAndRender(template.subjectLiquid, normalizedContext);
 
       // Render HTML body
-      const bodyHtml = await this.liquid.parseAndRender(template.bodyHtmlLiquid, context);
+      const bodyHtml = await this.liquid.parseAndRender(template.bodyHtmlLiquid, normalizedContext);
 
       // Render or generate text body
       let bodyText: string;
       if (template.bodyTextLiquid) {
-        bodyText = await this.liquid.parseAndRender(template.bodyTextLiquid, context);
+        bodyText = await this.liquid.parseAndRender(template.bodyTextLiquid, normalizedContext);
       } else {
         // Auto-convert HTML to text
         bodyText = this.htmlToText(bodyHtml);
@@ -185,17 +242,38 @@ export class EmailRenderer {
         bodyText: bodyText.trim()
       };
     } catch (error) {
-      throw new Error(`Template rendering failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Log detailed error information
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      
+      console.error('[EmailRenderer] Template rendering failed:', {
+        error: errorMessage,
+        stack: errorStack,
+        templateLength: {
+          subject: template.subjectLiquid?.length || 0,
+          html: template.bodyHtmlLiquid?.length || 0,
+          text: template.bodyTextLiquid?.length || 0
+        },
+        context: {
+          eventsCount: context.eventsCount,
+          hasDigest: !!context.digest,
+          eventsSample: context.events?.slice(0, 1)
+        }
+      });
+
+      throw new Error(`Template rendering failed: ${errorMessage}`);
     }
   }
 
   async renderSubject(subjectTemplate: string, context: RenderContext): Promise<string> {
-    const result = await this.liquid.parseAndRender(subjectTemplate, context);
+    const normalizedContext = this.normalizeContext(context);
+    const result = await this.liquid.parseAndRender(subjectTemplate, normalizedContext);
     return result.trim();
   }
 
   async renderHtml(htmlTemplate: string, context: RenderContext): Promise<string> {
-    return await this.liquid.parseAndRender(htmlTemplate, context);
+    const normalizedContext = this.normalizeContext(context);
+    return await this.liquid.parseAndRender(htmlTemplate, normalizedContext);
   }
 
   private htmlToText(html: string): string {

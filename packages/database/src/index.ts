@@ -2,12 +2,12 @@ export { getDb, resetDb } from './client';
 
 // Always export PostgreSQL schemas for now since we're using PostgreSQL locally and on staging
 // This avoids the timestamp conversion issues completely
-export { digests, digestTemplates } from './schema-pg/digests';
+export { digests, digestTemplates, digestRuns, emailLogs, apiKeys, webhookEvents } from './schema-pg/digests';
 export { applications, eventTypes } from './schema-pg/admin';
 export { emailTemplates, emailTemplates as templates } from './schema-pg/templates';
 
 // Export types from PostgreSQL schemas now that we're using them
-export type { Digest, NewDigest, DigestTemplate, NewDigestTemplate } from './schema-pg/digests';
+export type { Digest, NewDigest, DigestTemplate, NewDigestTemplate, DigestRun, NewDigestRun, EmailLog, NewEmailLog, ApiKey, NewApiKey, WebhookEvent, NewWebhookEvent } from './schema-pg/digests';
 export type { Application, EventType, NewApplication, NewEventType } from './schema-pg/admin';
 export type { EmailTemplate, NewEmailTemplate } from './schema-pg/templates';
 
