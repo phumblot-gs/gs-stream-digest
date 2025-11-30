@@ -149,8 +149,20 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Get accountId from authenticated user if available, otherwise use null (don't use 'default')
-      const accountId = (request as any).user?.accountId || null;
-      const createdBy = (request as any).user?.id || 'system';
+      const user = (request as any).user;
+      const accountId = user?.accountId || null;
+      const createdBy = user?.id || 'system';
+
+      // Log for debugging
+      logger.info({
+        event: 'digest_creation',
+        hasUser: !!user,
+        userId: user?.id,
+        userEmail: user?.email,
+        userRole: user?.role,
+        accountId,
+        accountIdType: typeof accountId,
+      }, `Creating digest with accountId: ${accountId} (user: ${user?.email || 'none'})`);
 
       // PostgreSQL handles timestamps with default functions
       const digest: any = {
