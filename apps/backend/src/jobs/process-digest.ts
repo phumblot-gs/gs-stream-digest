@@ -191,6 +191,7 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
       });
 
       // Update digest run
+      const durationMs = Date.now() - startTime;
       await db
         .update(digestRuns)
         .set({
@@ -198,7 +199,7 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
           eventsCount: 0,
           emailsSent: 0,
           completedAt: new Date(),
-          durationMs: Date.now() - new Date(runId).getTime()
+          durationMs: durationMs
         })
         .where(eq(digestRuns.id, runId));
 
@@ -255,6 +256,7 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
 
     // Update digest run
     const lastEvent = events[0];
+    const durationMs = Date.now() - startTime;
     await db
       .update(digestRuns)
       .set({
@@ -266,7 +268,7 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
         emailsSent: emailResults.sent,
         emailsFailed: emailResults.failed,
         completedAt: new Date(),
-        durationMs: Date.now() - new Date(runId).getTime()
+        durationMs: durationMs
       })
       .where(eq(digestRuns.id, runId));
 
