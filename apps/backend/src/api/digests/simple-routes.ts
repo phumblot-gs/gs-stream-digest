@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { db, digests, digestTemplates } from '@gs-digest/database';
+import { getDb, digests, digestTemplates } from '@gs-digest/database';
 import { eq, desc, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { EmailSender } from '../../services/email/sender';
@@ -26,6 +26,8 @@ const createDigestSchema = z.object({
 const updateDigestSchema = createDigestSchema.partial();
 
 const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
+  const db = getDb();
+  
   // List all digests
   fastify.get('/', async (request, reply) => {
     try {
