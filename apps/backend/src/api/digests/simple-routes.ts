@@ -148,26 +148,50 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         normalizedFilters.applications = normalizedFilters.sourceApplications;
       }
 
-      // Get accountId from authenticated user if available, otherwise use null (don't use 'default')
+      // Get accountId from authenticated user - REQUIRED
       const user = (request as any).user;
-      const accountId = user?.accountId || null;
-      const createdBy = user?.id || 'system';
+      
+      if (!user) {
+        return reply.status(401).send({ 
+          error: 'Authentication required',
+          message: 'You must be authenticated to create a digest'
+        });
+      }
+
+      const accountId = user.accountId;
+      
+      if (!accountId) {
+        logger.error({
+          event: 'digest_creation_failed',
+          reason: 'missing_account_id',
+          userId: user.id,
+          userEmail: user.email,
+          userRole: user.role,
+        }, `Failed to create digest: user ${user.email} has no accountId`);
+        
+        return reply.status(400).send({ 
+          error: 'Missing account ID',
+          message: 'Your user profile does not have an account ID. Please contact an administrator.'
+        });
+      }
+
+      const createdBy = user.id;
 
       // Log for debugging
       logger.info({
         event: 'digest_creation',
-        hasUser: !!user,
-        userId: user?.id,
-        userEmail: user?.email,
-        userRole: user?.role,
+        hasUser: true,
+        userId: user.id,
+        userEmail: user.email,
+        userRole: user.role,
         accountId,
         accountIdType: typeof accountId,
-      }, `Creating digest with accountId: ${accountId} (user: ${user?.email || 'none'})`);
+      }, `Creating digest with accountId: ${accountId} (user: ${user.email})`);
 
       // PostgreSQL handles timestamps with default functions
       const digest: any = {
         id: randomUUID(),
-        accountId, // Use user's accountId or null (not 'default')
+        accountId, // Use user's accountId (guaranteed to be non-null)
         name: data.name,
         description: data.description || null,
         filters: JSON.stringify(normalizedFilters),
