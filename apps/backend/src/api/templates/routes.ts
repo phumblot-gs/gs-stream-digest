@@ -171,6 +171,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
+      // PostgreSQL handles timestamps with default functions
       const template: any = {
         id: randomUUID(),
         accountId: 'default', // TODO: Get from auth
@@ -183,7 +184,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
         isDefault: data.isDefault,
         createdBy: 'system', // TODO: Get from auth
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Handle previewData JSON serialization if provided
@@ -223,7 +224,7 @@ const templateRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Prepare update data - only include non-undefined fields
       const updateData: any = {
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Add fields from data, filtering out undefined values

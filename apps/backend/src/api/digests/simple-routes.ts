@@ -26,6 +26,8 @@ const createDigestSchema = z.object({
 const updateDigestSchema = createDigestSchema.partial();
 
 const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
+  const db = getDb();
+  
   // List all digests
   fastify.get('/', async (request, reply) => {
     try {
@@ -145,6 +147,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         normalizedFilters.applications = normalizedFilters.sourceApplications;
       }
 
+      // PostgreSQL handles timestamps with default functions
       const digest: any = {
         id: randomUUID(),
         accountId: 'default', // TODO: Get from auth
@@ -159,7 +162,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
         isActive: data.isActive,
         createdBy: 'system', // TODO: Get from auth
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       await db.insert(digests).values(digest);
@@ -193,7 +196,7 @@ const simpleDigestRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Prepare update data
       const updateData: any = {
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Add fields from data, converting objects/arrays to JSON strings

@@ -23,7 +23,12 @@
       "Bash(flyctl machine stop:*)",
       "Bash(flyctl machine start:*)",
       "Bash(git commit:*)",
-      "Bash(flyctl machine status:*)"
+      "Bash(flyctl machine status:*)",
+      "Bash(flyctl secrets list:*)",
+      "Bash(flyctl postgres connect:*)",
+      "Bash(flyctl apps:*)",
+      "Bash(export PATH=\"/opt/homebrew/opt/postgresql@16/bin:$PATH\")",
+      "Bash(createdb:*)"
     ],
     "deny": [],
     "ask": []

@@ -8,7 +8,8 @@ export function initializeAxiom(): Axiom | null {
   const token = process.env.AXIOM_API_KEY || process.env.AXIOM_TOKEN;
 
   if (!token) {
-    logger.warn('AXIOM_API_KEY not configured, Axiom logging disabled');
+    console.warn('[Axiom] AXIOM_API_KEY not configured, Axiom logging disabled');
+    console.warn('[Axiom] Available env vars:', Object.keys(process.env).filter(k => k.includes('AXIOM')));
     return null;
   }
 
@@ -22,16 +23,28 @@ export function initializeAxiom(): Axiom | null {
     dataset = 'gs-dev';
   }
 
-  axiom = new Axiom({
-    token,
-  });
+  try {
+    axiom = new Axiom({
+      token,
+    });
 
-  logger.info(`Axiom initialized with dataset: ${dataset}`);
-  return axiom;
+    console.log(`[Axiom] ✅ Initialized with dataset: ${dataset}, env: ${env}`);
+    console.log(`[Axiom] Token length: ${token.length} chars`);
+    console.log(`[Axiom] Logs will be sent via logger queue system`);
+    
+    return axiom;
+  } catch (error) {
+    console.error('[Axiom] ❌ Failed to initialize:', error);
+    return null;
+  }
 }
 
 export function getAxiom(): Axiom | null {
   return axiom;
+}
+
+export function getDataset(): string | null {
+  return dataset;
 }
 
 export async function logEvent(event: string, data: any) {

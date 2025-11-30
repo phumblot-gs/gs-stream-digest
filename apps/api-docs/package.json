@@ -1,0 +1,15 @@
+{
+  "name": "@gs-digest/api-docs",
+  "version": "1.0.0",
+  "description": "Documentation API publique GS Stream Digest",
+  "private": true,
+  "scripts": {
+    "dev": "redocly preview-docs openapi.yaml --port 8080",
+    "build": "redocly build-docs openapi.yaml --output dist/index.html",
+    "lint": "redocly lint openapi.yaml",
+    "bundle": "redocly bundle openapi.yaml --output dist/openapi.json"
+  },
+  "dependencies": {
+    "@redocly/cli": "^1.10.0"
+  }
+}

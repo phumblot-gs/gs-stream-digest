@@ -3,16 +3,20 @@
 
 echo "🚀 Starting GS Stream Digest in production mode..."
 
+# Verify DATABASE_URL is set
+if [ -z "$DATABASE_URL" ]; then
+  echo "❌ ERROR: DATABASE_URL environment variable is required"
+  exit 1
+fi
+
 # Run database migrations
 echo "📊 Running database migrations..."
 cd /app/packages/database
-export DATABASE_PATH=/app/apps/backend/data/digest.db
 npm run db:migrate || echo "⚠️  Migrations failed or already applied"
 
 # Start backend in background
 echo "🔧 Starting backend on port 3000..."
 cd /app/apps/backend
-export DATABASE_PATH=/app/apps/backend/data/digest.db
 export PORT=3000
 npm start > /tmp/backend.log 2>&1 &
 BACKEND_PID=$!

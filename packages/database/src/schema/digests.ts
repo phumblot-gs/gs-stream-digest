@@ -2,7 +2,7 @@ import { sqliteTable, text, integer, index, primaryKey } from 'drizzle-orm/sqlit
 import { sql } from 'drizzle-orm';
 
 // Main digests table
-export const digests = sqliteTable('digests', {
+export const digests = sqliteTable('digest_digests', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
@@ -107,7 +107,7 @@ export const digestRuns = sqliteTable('digest_runs', {
 }));
 
 // Email send logs
-export const emailLogs = sqliteTable('email_logs', {
+export const emailLogs = sqliteTable('digest_email_logs', {
   id: text('id').primaryKey(),
   digestRunId: text('digest_run_id').notNull().references(() => digestRuns.id, { onDelete: 'cascade' }),
 
@@ -146,7 +146,7 @@ export const emailLogs = sqliteTable('email_logs', {
 }));
 
 // API Keys for external access
-export const apiKeys = sqliteTable('api_keys', {
+export const apiKeys = sqliteTable('digest_api_keys', {
   id: text('id').primaryKey(),
 
   // Key details
@@ -182,7 +182,7 @@ export const apiKeys = sqliteTable('api_keys', {
 }));
 
 // Webhook events from Resend
-export const webhookEvents = sqliteTable('webhook_events', {
+export const webhookEvents = sqliteTable('digest_webhook_events', {
   id: text('id').primaryKey(),
 
   // Event details

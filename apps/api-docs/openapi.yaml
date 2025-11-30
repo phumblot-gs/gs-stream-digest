@@ -1,0 +1,479 @@
+openapi: 3.0.3
+info:
+  title: GS Stream Digest Public API
+  version: 1.0.0
+  description: |
+    Public API to access Grand Shooting event digest data.
+
+    ## Authentication
+
+    All requests require an API key. You can obtain an API key from the admin dashboard.
+
+    Include your API key in the `X-API-Key` header or `Authorization: Bearer <key>`:
+
+    ```bash
+    curl -H "X-API-Key: gs_live_xxxxxxxxxxxx" \
+      https://digest-api.grand-shooting.com/api/v1/digests
+    ```
+
+    ## Rate Limiting
+
+    The API is limited to 100 requests per minute per API key.
+
+    ## Scoping
+
+    API keys can be scoped to a specific `accountId`. If your key is scoped, you will only see resources associated with that account.
+  contact:
+    name: Grand Shooting
+    url: https://grand-shooting.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://digest-api.grand-shooting.com/api/v1
+    description: Production server
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Digests
+    description: Operations on email digests
+  - name: Templates
+    description: Operations on email templates
+  - name: Statistics
+    description: Statistics and metrics
+
+paths:
+  /digests:
+    get:
+      tags:
+        - Digests
+      summary: List all digests
+      description: Returns the complete list of digests configured for your account
+      operationId: listDigests
+      responses:
+        '200':
+          description: Digest list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  digests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Digest'
+                  count:
+                    type: integer
+                    description: Total number of digests
+                    example: 3
+              examples:
+                success:
+                  summary: Successful response example
+                  value:
+                    digests:
+                      - id: "digest-123"
+                        name: "Daily Events Digest"
+                        description: "Daily summary of stream events"
+                        schedule: "0 9 * * *"
+                        isActive: true
+                        createdAt: "2024-01-15T08:00:00.000Z"
+                      - id: "digest-456"
+                        name: "Weekly Summary"
+                        description: "Complete weekly report"
+                        schedule: "0 9 * * 1"
+                        isActive: true
+                        createdAt: "2024-01-10T08:00:00.000Z"
+                    count: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /digests/{id}:
+    get:
+      tags:
+        - Digests
+      summary: Get a specific digest
+      description: Returns complete details of a digest by its ID
+      operationId: getDigest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Digest ID
+          schema:
+            type: string
+          example: "digest-123"
+      responses:
+        '200':
+          description: Digest retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DigestDetailed'
+              examples:
+                success:
+                  summary: Complete digest example
+                  value:
+                    id: "digest-123"
+                    name: "Daily Events Digest"
+                    description: "Daily summary of stream events"
+                    schedule: "0 9 * * *"
+                    isActive: true
+                    accountId: "account-789"
+                    templateId: "template-456"
+                    eventFilters:
+                      applications: ["sourcing", "workflow"]
+                      eventTypes: ["creation", "modification"]
+                    recipients:
+                      - "team@grand-shooting.com"
+                      - "alerts@grand-shooting.com"
+                    createdAt: "2024-01-15T08:00:00.000Z"
+                    updatedAt: "2024-01-20T10:30:00.000Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /templates:
+    get:
+      tags:
+        - Templates
+      summary: List all templates
+      description: Returns the list of available email templates
+      operationId: listTemplates
+      responses:
+        '200':
+          description: Template list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Template'
+                  count:
+                    type: integer
+                    example: 2
+              examples:
+                success:
+                  summary: Response example
+                  value:
+                    templates:
+                      - id: "template-123"
+                        name: "Default Template"
+                        description: "Default template for digests"
+                        subject: "📊 Daily Digest - {{date}}"
+                        isActive: true
+                        createdAt: "2024-01-01T00:00:00.000Z"
+                        updatedAt: "2024-01-15T10:00:00.000Z"
+                    count: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /stats:
+    get:
+      tags:
+        - Statistics
+      summary: Get statistics
+      description: |
+        Returns digest usage statistics for the last 30 days.
+
+        Statistics include:
+        - Total number of digest executions
+        - Execution success rate
+        - Number of emails sent
+        - Delivery rate
+      operationId: getStats
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Statistics'
+              examples:
+                success:
+                  summary: Statistics example
+                  value:
+                    period: "last_30_days"
+                    runs:
+                      total: 90
+                      completed: 87
+                      failed: 3
+                      successRate: 97
+                    emails:
+                      sent: 350
+                      delivered: 345
+                      bounced: 2
+                      failed: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API key for authentication. You can also use the `Authorization: Bearer <key>` header.
+
+        Example: `X-API-Key: gs_live_xxxxxxxxxxxx`
+
+  schemas:
+    Digest:
+      type: object
+      required:
+        - id
+        - name
+        - schedule
+        - isActive
+        - createdAt
+      properties:
+        id:
+          type: string
+          description: Unique digest identifier
+          example: "digest-123"
+        name:
+          type: string
+          description: Digest name
+          example: "Daily Events Digest"
+        description:
+          type: string
+          nullable: true
+          description: Optional digest description
+          example: "Daily summary of stream events"
+        schedule:
+          type: string
+          description: Cron expression for scheduling
+          example: "0 9 * * *"
+        isActive:
+          type: boolean
+          description: Digest activation status
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation date
+          example: "2024-01-15T08:00:00.000Z"
+
+    DigestDetailed:
+      allOf:
+        - $ref: '#/components/schemas/Digest'
+        - type: object
+          properties:
+            accountId:
+              type: string
+              nullable: true
+              description: Associated account ID
+              example: "account-789"
+            templateId:
+              type: string
+              nullable: true
+              description: Template ID used
+              example: "template-456"
+            eventFilters:
+              type: object
+              description: Filters applied to events
+              properties:
+                applications:
+                  type: array
+                  items:
+                    type: string
+                  example: ["sourcing", "workflow"]
+                eventTypes:
+                  type: array
+                  items:
+                    type: string
+                  example: ["creation", "modification"]
+            recipients:
+              type: array
+              items:
+                type: string
+                format: email
+              description: List of recipients
+              example: ["team@grand-shooting.com"]
+            updatedAt:
+              type: string
+              format: date-time
+              example: "2024-01-20T10:30:00.000Z"
+
+    Template:
+      type: object
+      required:
+        - id
+        - name
+        - subject
+        - isActive
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique template identifier
+          example: "template-123"
+        name:
+          type: string
+          description: Template name
+          example: "Default Template"
+        description:
+          type: string
+          nullable: true
+          description: Template description
+          example: "Default template for digests"
+        subject:
+          type: string
+          description: Email subject (supports Handlebars variables)
+          example: "📊 Daily Digest - {{date}}"
+        isActive:
+          type: boolean
+          description: Activation status
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00.000Z"
+
+    Statistics:
+      type: object
+      required:
+        - period
+        - runs
+        - emails
+      properties:
+        period:
+          type: string
+          description: Period covered by statistics
+          example: "last_30_days"
+        runs:
+          type: object
+          required:
+            - total
+            - completed
+            - failed
+            - successRate
+          properties:
+            total:
+              type: integer
+              description: Total number of executions
+              example: 90
+            completed:
+              type: integer
+              description: Number of successful executions
+              example: 87
+            failed:
+              type: integer
+              description: Number of failed executions
+              example: 3
+            successRate:
+              type: integer
+              description: Success rate in percentage
+              example: 97
+        emails:
+          type: object
+          required:
+            - sent
+            - delivered
+            - bounced
+            - failed
+          properties:
+            sent:
+              type: integer
+              description: Total number of emails sent
+              example: 350
+            delivered:
+              type: integer
+              description: Number of emails delivered
+              example: 345
+            bounced:
+              type: integer
+              description: Number of bounced emails
+              example: 2
+            failed:
+              type: integer
+              description: Number of failed emails
+              example: 3
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "Unauthorized"
+        message:
+          type: string
+          description: Detailed error message
+          example: "API key required. Provide via X-API-Key header or Authorization: Bearer header"
+
+  responses:
+    Unauthorized:
+      description: Authentication required or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            missingKey:
+              summary: Missing API key
+              value:
+                error: "Unauthorized"
+                message: "API key required. Provide via X-API-Key header or Authorization: Bearer header"
+            invalidKey:
+              summary: Invalid API key
+              value:
+                error: "Unauthorized"
+                message: "Invalid API key"
+            revokedKey:
+              summary: Revoked API key
+              value:
+                error: "Unauthorized"
+                message: "API key has been revoked"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Not Found"
+            message: "Digest not found"
+
+    TooManyRequests:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Too Many Requests"
+            message: "Rate limit exceeded. Maximum 100 requests per minute."
+
+x-tagGroups:
+  - name: API Resources
+    tags:
+      - Digests
+      - Templates
+      - Statistics

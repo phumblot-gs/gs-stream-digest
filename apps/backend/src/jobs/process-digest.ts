@@ -42,6 +42,15 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
     triggeredBy: data.triggeredBy
   });
 
+  // Log job start to Axiom
+  await logEvent('digest.job_started', {
+    digestId: data.digestId,
+    runId,
+    runType: data.runType || 'scheduled',
+    triggeredBy: data.triggeredBy
+  });
+>>>>>>> Stashed changes
+
   try {
     // Get digest configuration
     logger.info(`[process-digest] Querying for digest ${data.digestId}`);

@@ -125,6 +125,10 @@ export async function createServer() {
   await server.register(monitoringRoutes, { prefix: '/api/monitoring' });
   await server.register(webhookRoutes, { prefix: '/api/webhooks' });
   await server.register(adminRoutes, { prefix: '/api/admin' });
+  
+  // Register logs route (import dynamically to avoid circular dependency)
+  const logsRoutes = (await import('./api/logs/routes')).default;
+  await server.register(logsRoutes, { prefix: '/api/logs' });
 
   return server;
 }

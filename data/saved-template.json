@@ -1,0 +1,46 @@
+{
+  "template": {
+    "id": "5921032f-62ce-4287-a0ae-7a1e5c220e6d",
+    "name": "Sourcing",
+    "description": null,
+    "accountId": "default",
+    "isGlobal": false,
+    "isDefault": false,
+    "subjectLiquid": "{{ digest.name }} - {{ eventsCount }} events",
+    "bodyHtmlLiquid": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; }\n    .content { background: #f7f7f7; padding: 30px; }\n    .event { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }\n    .event-type { color: #667eea; font-weight: bold; font-size: 14px; text-transform: uppercase; }\n    .event-time { color: #999; font-size: 12px; margin-top: 5px; }\n    .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }\n    a { color: #667eea; text-decoration: none; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>{{ digest.name }}</h1>\n    </div>\n    \n    <div class=\"content\">\n      {% if eventsCount > 0 %}\n        <h2>Fichiers mis à disposition</h2>\n        \n        {% for event in events %}\n        {% for seller in event.payload.sellers_shared %}\n          <div class=\"event\">\n            <div class=\"event-type\">{{ seller.account_name }}</div>\n            <div class=\"event-time\">{{ event.timestamp | formatDate }}</div>\n            \n            <p>\n              <strong>Nouveaux fichiers :</strong> {{ seller.created_files_count }}<br />\n              <strong>Mises à jour :</strong> {{ seller.updated_files_count }}\n            </p>\n            \n          </div>\n        {% endfor %}\n        {% endfor %}\n      {% else %}\n        <div class=\"event\">\n          <p style=\"text-align: center; color: #999;\">Aucun événement pour cette période.</p>\n        </div>\n      {% endif %}\n    </div>\n    \n    <div class=\"footer\">\n      <p>© {{ now | date: '%Y' }} Grand Shooting - Digest automatique</p>\n      <p style=\"font-size: 12px; margin-top: 10px;\">\n        Vous recevez cet email car vous êtes abonné au digest \"{{ digest.name }}\"\n      </p>\n    </div>\n  </div>\n</body>\n</html>",
+    "bodyTextLiquid": "{{ digest.name }}\n{{ eventsCount }} nouveau(x) événement(s)\n\n{% for event in events %}\n{% for seller in event.payload.sellers_shared %}\n---\nMarque: {{ seller.account_name }}\nDate: {{ event.timestamp | formatDate }}\n{% if seller.created_files_count > 0 %}Nouveaux fichiers : {{ seller.created_files_count }}{% endif %}{% if seller.created_files_count > 0 and seller.updated_files_count > 0 %}\n{% endif %}{% if seller.updated_files_count > 0 %}Mises à jour : {{ seller.updated_files_count }}{% endif %}\n\n{% endfor %}\n{% endfor %}\n\n© {{ now | date: '%Y' }} Grand Shooting\nVous recevez cet email car vous êtes abonné au digest \"{{ digest.name }}\".",
+    "previewData": {
+      "digest": {
+        "name": "Digest Hebdomadaire",
+        "description": "Résumé des activités de la semaine"
+      },
+      "eventsCount": 3,
+      "currentDate": "2025-11-29T10:38:05.095Z",
+      "recipientEmail": "user@example.com",
+      "events": [
+        {
+          "uid": "evt_001",
+          "timestamp": "2025-11-29T10:38:05.095Z",
+          "eventType": "file.share",
+          "accountId": "acc_123",
+          "source": {
+            "application": "gs-sourcing",
+            "environment": "production"
+          },
+          "payload": {
+            "sellers_shared": [
+              {
+                "account_name": "Marque Example",
+                "created_files_count": 5,
+                "updated_files_count": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "createdBy": "system",
+    "createdAt": 1764412723,
+    "updatedAt": 1764412723
+  }
+}
