@@ -4,37 +4,25 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-<<<<<<< Updated upstream
     "db:generate": "drizzle-kit generate",
+    "db:generate:pg": "drizzle-kit generate --config=drizzle.config.pg.ts",
     "db:migrate": "tsx src/migrate.ts",
+    "db:migrate:pg": "tsx src/migrate-pg.ts",
     "db:push": "drizzle-kit push",
+    "db:push:pg": "drizzle-kit push --config=drizzle.config.pg.ts",
     "db:studio": "drizzle-kit studio",
-=======
-    "db:generate": "drizzle-kit generate --config=drizzle.config.pg.ts",
-    "db:migrate": "tsx src/migrate-pg.ts",
-    "db:push": "drizzle-kit push --config=drizzle.config.pg.ts",
-    "db:studio": "drizzle-kit studio --config=drizzle.config.pg.ts",
+    "db:studio:pg": "drizzle-kit studio --config=drizzle.config.pg.ts",
     "db:seed": "tsx src/seed.ts",
->>>>>>> Stashed changes
     "build": "tsc"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.0.4",
-<<<<<<< Updated upstream
-    "better-sqlite3": "^11.6.0",
-    "drizzle-orm": "^0.38.2",
-    "nanoid": "^5.0.9"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
-=======
     "drizzle-orm": "^0.38.4",
     "nanoid": "^5.0.9",
     "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/pg": "^8.15.6",
->>>>>>> Stashed changes
     "drizzle-kit": "^0.30.1",
     "tsx": "^4.19.2"
   }

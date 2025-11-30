@@ -9,14 +9,18 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
+    "dev:backend": "npm run dev --workspace=@gs-digest/backend",
+    "dev:frontend": "npm run dev --workspace=@gs-digest/frontend",
     "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "db:generate": "npm run db:generate --workspace=@gs-digest/database",
     "db:migrate": "npm run db:migrate --workspace=@gs-digest/database",
+    "db:migrate:pg": "npm run db:migrate:pg --workspace=@gs-digest/database",
     "db:push": "npm run db:push --workspace=@gs-digest/database",
-    "db:studio": "npm run db:studio --workspace=@gs-digest/database"
+    "db:studio": "npm run db:studio --workspace=@gs-digest/database",
+    "db:seed": "npm run db:seed --workspace=@gs-digest/database"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

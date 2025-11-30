@@ -1,16 +1,15 @@
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+import { pgTable, text, boolean, timestamp, index } from 'drizzle-orm/pg-core';
 
 // Email templates for digests
-export const emailTemplates = sqliteTable('digest_email_templates', {
+export const emailTemplates = pgTable('digest_email_templates', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
 
   // Template ownership
   accountId: text('account_id'), // null = global template
-  isGlobal: integer('is_global', { mode: 'boolean' }).default(false).notNull(),
-  isDefault: integer('is_default', { mode: 'boolean' }).default(false).notNull(),
+  isGlobal: boolean('is_global').default(false).notNull(),
+  isDefault: boolean('is_default').default(false).notNull(),
 
   // Liquid templates
   subjectLiquid: text('subject_liquid').notNull(),
@@ -22,9 +21,13 @@ export const emailTemplates = sqliteTable('digest_email_templates', {
 
   // Metadata
   createdBy: text('created_by').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`)
+  createdAt: timestamp('created_at', { mode: 'date' }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).notNull().defaultNow()
 }, (table) => ({
   accountIdx: index('idx_email_templates_account').on(table.accountId),
   globalIdx: index('idx_email_templates_global').on(table.isGlobal)
 }));
+
+// Type exports
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type NewEmailTemplate = typeof emailTemplates.$inferInsert;
