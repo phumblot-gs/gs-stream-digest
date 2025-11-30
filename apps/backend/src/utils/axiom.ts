@@ -30,27 +30,7 @@ export function initializeAxiom(): Axiom | null {
 
     console.log(`[Axiom] ✅ Initialized with dataset: ${dataset}, env: ${env}`);
     console.log(`[Axiom] Token length: ${token.length} chars`);
-    
-    // Test connection by sending a test log (async, don't await)
-    // Use setTimeout to avoid blocking initialization
-    setTimeout(() => {
-      try {
-        if (axiom && typeof axiom.ingest === 'function') {
-          axiom.ingest(dataset, [{
-            _time: new Date().toISOString(),
-            event: 'axiom_test',
-            message: 'Axiom connection test',
-            env,
-          }]).then(() => {
-            console.log(`[Axiom] ✅ Test log sent successfully to ${dataset}`);
-          }).catch((err) => {
-            console.error(`[Axiom] ❌ Failed to send test log:`, err?.message || err);
-          });
-        }
-      } catch (err) {
-        console.error(`[Axiom] ❌ Error in test log:`, err);
-      }
-    }, 100);
+    console.log(`[Axiom] Logs will be sent via logger queue system`);
     
     return axiom;
   } catch (error) {
