@@ -31,17 +31,21 @@ export function initializeAxiom(): Axiom | null {
     console.log(`[Axiom] ✅ Initialized with dataset: ${dataset}, env: ${env}`);
     console.log(`[Axiom] Token length: ${token.length} chars`);
     
-    // Test connection by sending a test log
-    axiom.ingest(dataset, [{
-      _time: new Date().toISOString(),
-      event: 'axiom_test',
-      message: 'Axiom connection test',
-      env,
-    }]).then(() => {
-      console.log(`[Axiom] ✅ Test log sent successfully to ${dataset}`);
-    }).catch((err) => {
-      console.error(`[Axiom] ❌ Failed to send test log:`, err);
-    });
+    // Test connection by sending a test log (async, don't await)
+    if (axiom && typeof axiom.ingest === 'function') {
+      axiom.ingest(dataset, [{
+        _time: new Date().toISOString(),
+        event: 'axiom_test',
+        message: 'Axiom connection test',
+        env,
+      }]).then(() => {
+        console.log(`[Axiom] ✅ Test log sent successfully to ${dataset}`);
+      }).catch((err) => {
+        console.error(`[Axiom] ❌ Failed to send test log:`, err);
+      });
+    } else {
+      console.warn(`[Axiom] ⚠️  Axiom instance or ingest method not available`);
+    }
     
     return axiom;
   } catch (error) {
