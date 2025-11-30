@@ -19,6 +19,19 @@ export class NATSEventClient {
 
     // Remove trailing slash from URL
     this.baseUrl = this.config.url.replace(/\/$/, '');
+
+    // Log configuration (mask API key)
+    const maskedApiKey = this.config.apiKey 
+      ? `${this.config.apiKey.substring(0, 8)}...${this.config.apiKey.substring(this.config.apiKey.length - 4)}`
+      : '[NOT SET]';
+    
+    logger.info({
+      event: 'nats_client_init',
+      baseUrl: this.baseUrl,
+      apiKeySet: !!this.config.apiKey,
+      apiKeyPrefix: maskedApiKey,
+      urlFromEnv: process.env.NATS_URL || '[NOT SET]'
+    }, 'NATS client initialized');
   }
 
   /**
@@ -56,7 +69,13 @@ export class NATSEventClient {
       // Make request to NATS API
       const url = `${this.baseUrl}/api/events?${params.toString()}`;
 
-      logger.debug(`Fetching events from NATS: ${url}`);
+      logger.info({
+        event: 'nats_fetch_events',
+        url,
+        baseUrl: this.baseUrl,
+        params: Object.fromEntries(params),
+        method: 'GET'
+      }, `Fetching events from NATS: ${url}`);
 
       const response = await fetch(url, {
         method: 'GET',
@@ -67,7 +86,16 @@ export class NATSEventClient {
       });
 
       if (!response.ok) {
-        throw new Error(`NATS API error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'Unable to read error response');
+        logger.error({
+          event: 'nats_fetch_error',
+          url,
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+          baseUrl: this.baseUrl
+        }, `NATS API error: ${response.status} ${response.statusText}`);
+        throw new Error(`NATS API error: ${response.status} ${response.statusText} - URL: ${url}`);
       }
 
       const data = await response.json();

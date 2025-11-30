@@ -77,10 +77,11 @@ async function start() {
         AXIOM_TOKEN: maskSensitive(process.env.AXIOM_TOKEN || process.env.AXIOM_API_KEY),
         AXIOM_DATASET: process.env.AXIOM_DATASET || '[NOT SET]',
       },
-      nats: {
-        NATS_URL: process.env.NATS_URL || '[NOT SET]',
-        NATS_API_KEY: maskSensitive(process.env.NATS_API_KEY),
-      },
+             nats: {
+               NATS_URL: process.env.NATS_URL || '[NOT SET]',
+               NATS_API_KEY: maskSensitive(process.env.NATS_API_KEY),
+               natsUrlHostname: extractDbHostname(process.env.NATS_URL), // Reuse function to extract hostname
+             },
       email: {
         RESEND_API_KEY: maskSensitive(process.env.RESEND_API_KEY),
       },
