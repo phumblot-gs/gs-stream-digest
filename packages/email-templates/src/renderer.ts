@@ -163,7 +163,7 @@ export class EmailRenderer {
    * Normalize events to ensure all properties exist and are safe for Liquid templates
    */
   private normalizeEvents(events: Event[]): Event[] {
-    return events.map(event => {
+    return events.map((event, index) => {
       // Deep clone to avoid mutating original
       const normalized: any = {
         ...event,
@@ -174,23 +174,56 @@ export class EmailRenderer {
         accountId: event.accountId || ''
       };
 
+      // Log original event data for debugging (only first event to avoid spam)
+      if (index === 0) {
+        console.log('[EmailRenderer] Normalizing event:', {
+          eventType: event.eventType,
+          hasData: !!event.data,
+          dataKeys: event.data ? Object.keys(event.data) : [],
+          hasSellersShared: !!(event.data as any)?.sellers_shared,
+          sellersSharedType: typeof (event.data as any)?.sellers_shared,
+          sellersSharedLength: Array.isArray((event.data as any)?.sellers_shared) ? (event.data as any).sellers_shared.length : 'not array',
+        });
+      }
+
       // Ensure data.sellers_shared exists and is an array (for file share events)
-      if (!normalized.data.sellers_shared) {
+      // Check both data.sellers_shared and data.payload.sellers_shared for compatibility
+      let sellersShared = normalized.data.sellers_shared;
+      
+      // If sellers_shared is not directly in data, check if it's nested
+      if (!sellersShared && normalized.data.payload) {
+        sellersShared = normalized.data.payload.sellers_shared;
+      }
+
+      if (!sellersShared) {
         normalized.data.sellers_shared = [];
-      } else if (!Array.isArray(normalized.data.sellers_shared)) {
+      } else if (!Array.isArray(sellersShared)) {
         normalized.data.sellers_shared = [];
       } else {
         // Normalize each seller object
-        normalized.data.sellers_shared = normalized.data.sellers_shared.map((seller: any) => ({
-          account_name: seller?.account_name || 'undefined',
-          created_files_count: seller?.created_files_count ?? 0,
-          updated_files_count: seller?.updated_files_count ?? 0,
-          ...seller
+        normalized.data.sellers_shared = sellersShared.map((seller: any) => ({
+          account_id: seller?.account_id || seller?.accountId || 'undefined',
+          account_name: seller?.account_name || seller?.accountName || 'undefined',
+          created_files_count: seller?.created_files_count ?? seller?.createdFilesCount ?? 0,
+          updated_files_count: seller?.updated_files_count ?? seller?.updatedFilesCount ?? 0,
+          ...seller // Keep all original properties
         }));
       }
 
       // Also ensure payload exists for backward compatibility (maps to data)
+      // This allows templates to use event.payload.sellers_shared
       normalized.payload = normalized.data;
+
+      // Log normalized result for debugging (only first event)
+      if (index === 0) {
+        console.log('[EmailRenderer] Normalized event:', {
+          hasPayload: !!normalized.payload,
+          hasData: !!normalized.data,
+          payloadSellersSharedLength: Array.isArray(normalized.payload?.sellers_shared) ? normalized.payload.sellers_shared.length : 'not array',
+          dataSellersSharedLength: Array.isArray(normalized.data?.sellers_shared) ? normalized.data.sellers_shared.length : 'not array',
+          firstSeller: normalized.data?.sellers_shared?.[0],
+        });
+      }
 
       return normalized as Event;
     });
