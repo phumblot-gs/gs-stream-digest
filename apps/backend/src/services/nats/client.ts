@@ -1,6 +1,5 @@
 import { logger } from '../../utils/logger';
 import { logEvent } from '../../utils/axiom';
-import { randomUUID } from 'crypto';
 import type { Event } from '@gs-digest/shared';
 
 interface NATSConfig {
@@ -341,24 +340,10 @@ export class NATSEventClient {
       const url = `${this.baseUrl}/api/events`;
 
       // Map our internal Event format to NATS API format
-      // NATS expects: { eventId (UUID), eventType, timestamp, source, actor (required), scope, payload, metadata }
+      // NATS expects: { eventType, timestamp, source, actor (required), scope, payload, metadata }
+      // eventId is optional, so we don't include it
       
-      // Generate a valid UUID for eventId (NATS requires UUID format)
-      let eventId: string;
-      if (event.uid) {
-        // Try to use uid if it's already a UUID, otherwise generate a new one
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (uuidRegex.test(event.uid)) {
-          eventId = event.uid;
-        } else {
-          eventId = randomUUID();
-        }
-      } else {
-        eventId = randomUUID();
-      }
-
-      const natsEvent = {
-        eventId, // Must be a valid UUID
+      const natsEvent: any = {
         eventType: event.eventType,
         timestamp: event.timestamp || new Date().toISOString(),
         source: {
@@ -366,11 +351,12 @@ export class NATSEventClient {
           version: event.source?.version || '1.0.0',
           environment: event.source?.environment || process.env.NODE_ENV || 'development'
         },
-        // actor is REQUIRED by NATS API, so always provide it
+        // actor is REQUIRED by NATS API
+        // Use system user ID and digest accountId
         actor: {
-          userId: event.userId || undefined,
-          accountId: event.accountId || undefined,
-          role: undefined // We don't have role info in Event type
+          userId: '00000000-0000-0000-0000-000000000000', // System user UUID
+          accountId: event.accountId || undefined, // Use digest accountId
+          role: undefined
         },
         scope: event.accountId ? {
           accountId: event.accountId,
