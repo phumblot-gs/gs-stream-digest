@@ -1,5 +1,6 @@
 import { logger } from '../../utils/logger';
 import { logEvent } from '../../utils/axiom';
+import { nanoid } from 'nanoid';
 import type { Event } from '@gs-digest/shared';
 
 interface NATSConfig {
@@ -333,10 +334,43 @@ export class NATSEventClient {
 
   /**
    * Emit an event back to NATS (for digest.sent events)
+   * Maps our internal Event format to NATS API format
    */
   async emitEvent(event: Partial<Event>): Promise<void> {
     try {
       const url = `${this.baseUrl}/api/events`;
+
+      // Map our internal Event format to NATS API format
+      // NATS expects: { eventId, eventType, timestamp, source, actor, scope, payload, metadata }
+      const natsEvent = {
+        eventId: event.uid || nanoid(), // Use uid as eventId, or generate new one
+        eventType: event.eventType,
+        timestamp: event.timestamp || new Date().toISOString(),
+        source: {
+          application: event.source?.application || 'gs-stream-digest',
+          version: event.source?.version || '1.0.0',
+          environment: event.source?.environment || process.env.NODE_ENV || 'development'
+        },
+        actor: event.userId ? {
+          userId: event.userId,
+          accountId: event.accountId,
+          role: undefined // We don't have role info in Event type
+        } : undefined,
+        scope: event.accountId ? {
+          accountId: event.accountId,
+          resourceType: 'digest',
+          resourceId: event.data?.digestId || undefined
+        } : undefined,
+        payload: event.data || {}, // Our 'data' becomes NATS 'payload'
+        metadata: event.metadata || {}
+      };
+
+      logger.info({
+        event: 'nats_emit_event',
+        url,
+        natsEvent,
+        originalEvent: event
+      }, `Emitting event to NATS: ${event.eventType}`);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -344,11 +378,20 @@ export class NATSEventClient {
           'Authorization': `Bearer ${this.config.apiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(event)
+        body: JSON.stringify(natsEvent)
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to emit event: ${response.status} ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'Unable to read error response');
+        logger.error({
+          event: 'nats_emit_event_error',
+          url,
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+          natsEvent
+        }, `Failed to emit event: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to emit event: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       logger.debug(`Emitted event to NATS: ${event.eventType}`);
