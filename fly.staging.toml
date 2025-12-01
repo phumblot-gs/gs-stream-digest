@@ -7,6 +7,7 @@ primary_region = 'cdg'  # Paris region
 [env]
   NODE_ENV = 'staging'
   PORT = '3001'
+  LOG_LEVEL = 'debug'
 
 [http_service]
   internal_port = 3001

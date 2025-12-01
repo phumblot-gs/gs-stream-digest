@@ -294,11 +294,12 @@ export default async function processDigest(data: JobData): Promise<JobResult> {
     }
 
     // Emit digest.sent event back to NATS
+    // Note: eventId will be generated as UUID in emitEvent, uid is not needed
     await natsClient.emitEvent({
-      uid: nanoid(),
       timestamp: new Date().toISOString(),
       eventType: 'digest.sent',
       accountId: digest.accountId,
+      userId: data.triggeredBy || 'system', // Use triggeredBy if available, otherwise 'system'
       source: {
         application: 'gs-stream-digest',
         environment: process.env.NODE_ENV || 'development'
