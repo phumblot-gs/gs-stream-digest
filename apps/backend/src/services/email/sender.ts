@@ -6,6 +6,7 @@ import type { Event, DigestTemplate } from '@gs-digest/shared';
 import { logger } from '../../utils/logger';
 import { logEvent } from '../../utils/axiom';
 import { Sentry } from '../../utils/sentry';
+import { getResendRateLimiter } from './rate-limiter';
 
 interface EmailData {
   to: string[];
@@ -15,10 +16,94 @@ interface EmailData {
   tags?: { name: string; value: string }[];
 }
 
+/**
+ * Helper function to capture Resend API errors in Sentry with detailed context
+ */
+function captureResendErrorInSentry(
+  error: any,
+  context: {
+    digestId?: string;
+    digestRunId?: string;
+    recipient?: string;
+    emailType?: 'digest' | 'test';
+    resendError?: {
+      name?: string;
+      message?: string;
+      statusCode?: number;
+    };
+  }
+) {
+  if (!process.env.SENTRY_DSN) {
+    return;
+  }
+
+  // Extract error information
+  const errorName = context.resendError?.name || error?.name || 'ResendError';
+  const errorMessage = context.resendError?.message || error?.message || 'Unknown Resend error';
+  const statusCode = context.resendError?.statusCode || error?.statusCode;
+
+  // Determine error type from status code or error name
+  let errorType = 'unknown';
+  if (statusCode === 429 || errorName === 'rate_limit_exceeded') {
+    errorType = 'rate_limit_exceeded';
+  } else if (statusCode === 401 || statusCode === 403) {
+    errorType = 'authentication_error';
+  } else if (statusCode === 400) {
+    errorType = 'bad_request';
+  } else if (statusCode === 404) {
+    errorType = 'not_found';
+  } else if (statusCode >= 500) {
+    errorType = 'server_error';
+  }
+
+  // Create a proper Error object if needed
+  const errorToCapture = error instanceof Error 
+    ? error 
+    : new Error(errorMessage);
+
+  // Capture in Sentry with detailed context
+  Sentry.captureException(errorToCapture, {
+    tags: {
+      component: 'email_sender',
+      service: 'resend',
+      error_type: errorType,
+      email_type: context.emailType || 'unknown',
+      has_digest_id: !!context.digestId,
+      has_digest_run_id: !!context.digestRunId,
+      has_recipient: !!context.recipient,
+    },
+    extra: {
+      resend_error: {
+        name: errorName,
+        message: errorMessage,
+        statusCode: statusCode,
+        ...(context.resendError || {}),
+      },
+      context: {
+        digestId: context.digestId,
+        digestRunId: context.digestRunId,
+        recipient: context.recipient,
+        emailType: context.emailType,
+      },
+      has_api_key: !!process.env.RESEND_API_KEY,
+    },
+    level: errorType === 'rate_limit_exceeded' ? 'warning' : 'error',
+  });
+
+  // Log for debugging
+  logger.debug(`[Sentry] Captured Resend error: ${errorType} - ${errorMessage}`, {
+    errorType,
+    statusCode,
+    digestId: context.digestId,
+    recipient: context.recipient,
+  });
+}
+
 export class EmailSender {
   private resend: Resend;
   private renderer: EmailRenderer;
   private db = getDb();
+  private rateLimiter = getResendRateLimiter();
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
@@ -67,26 +152,58 @@ export class EmailSender {
             createdAt: new Date()
           });
 
-          // Send email via Resend
-          const response = await this.resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'noreply@mediagrade.grand-shooting.com',
-            to: recipient,
-            subject: rendered.subject,
-            html: rendered.bodyHtml,
-            text: rendered.bodyText,
-            tags: [
-              { name: 'digest_id', value: digestInfo.id },
-              { name: 'digest_run_id', value: digestRunId },
-              { name: 'account_id', value: digestInfo.accountId }
-            ]
-          });
+          // Send email via Resend with rate limiting and retry logic
+          const response = await this.rateLimiter.execute(async () => {
+            return await this.resend.emails.send({
+              from: process.env.RESEND_FROM_EMAIL || 'noreply@mediagrade.grand-shooting.com',
+              to: recipient,
+              subject: rendered.subject,
+              html: rendered.bodyHtml,
+              text: rendered.bodyText,
+              tags: [
+                { name: 'digest_id', value: digestInfo.id },
+                { name: 'digest_run_id', value: digestRunId },
+                { name: 'account_id', value: digestInfo.accountId }
+              ]
+            });
+          }, { recipient });
 
           if (response.error) {
-            // Provide more detailed error message for authentication issues
-            if (response.error.message?.includes('401') || response.error.message?.includes('invalid') || response.error.message?.includes('unauthorized')) {
+            // Extract error details (handle optional properties safely)
+            const resendError = {
+              name: response.error.name || 'UnknownError',
+              message: response.error.message || 'Unknown error',
+              statusCode: (response.error as any).statusCode as number | undefined,
+            };
+
+            // Capture error in Sentry with detailed context
+            // Note: Rate limit errors (429) should be rare now thanks to rate limiter,
+            // but we still capture them for monitoring
+            captureResendErrorInSentry(response.error, {
+              digestId: digestInfo.id,
+              digestRunId,
+              recipient,
+              emailType: 'digest',
+              resendError,
+            });
+
+            // Provide more detailed error message based on error type
+            // Note: 429 errors should be retried automatically by rate limiter,
+            // so if we reach here, all retries have been exhausted
+            if (resendError.statusCode === 429 || resendError.name === 'rate_limit_exceeded') {
+              throw new Error(`Rate limit dépassé après plusieurs tentatives: ${resendError.message || 'Trop de requêtes. Limite de 2 requêtes par seconde.'}`);
+            } else if (resendError.statusCode === 401 || resendError.statusCode === 403 || 
+                       resendError.message?.includes('401') || resendError.message?.includes('403') ||
+                       resendError.message?.includes('invalid') || resendError.message?.includes('unauthorized')) {
               throw new Error('Clé API Resend invalide ou manquante. Vérifiez la configuration RESEND_API_KEY.');
+            } else if (resendError.statusCode === 400) {
+              throw new Error(`Requête invalide: ${resendError.message || 'Vérifiez les paramètres de l\'email.'}`);
+            } else if (resendError.statusCode === 404) {
+              throw new Error(`Ressource non trouvée: ${resendError.message || 'Vérifiez la configuration du domaine d\'envoi.'}`);
+            } else if (resendError.statusCode >= 500) {
+              throw new Error(`Erreur serveur Resend: ${resendError.message || 'Erreur temporaire du service Resend.'}`);
             }
-            throw new Error(response.error.message || 'Erreur lors de l\'envoi de l\'email');
+            throw new Error(resendError.message || 'Erreur lors de l\'envoi de l\'email');
           }
 
           // Update email log with Resend ID
@@ -110,6 +227,23 @@ export class EmailSender {
           });
         } catch (error) {
           results.failed++;
+
+          // Capture error in Sentry if not already captured (for non-Resend errors)
+          // Resend errors are already captured above, but network errors, etc. need to be captured here
+          if (process.env.SENTRY_DSN) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            // Only capture if it's not a Resend error (those are already captured above)
+            if (!errorMessage.includes('Rate limit') && 
+                !errorMessage.includes('Clé API Resend') &&
+                !errorMessage.includes('rate_limit_exceeded')) {
+              captureResendErrorInSentry(error, {
+                digestId: digestInfo.id,
+                digestRunId,
+                recipient,
+                emailType: 'digest',
+              });
+            }
+          }
 
           // Update email log with error
           await this.db
@@ -163,25 +297,51 @@ export class EmailSender {
       const cleanSubject = rendered.subject.replace(/^\[TEST\]\s*/i, '');
       const subject = `[TEST] ${cleanSubject}`;
 
-      // Send email via Resend
-      const response = await this.resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'noreply@mediagrade.grand-shooting.com',
-        to: recipient,
-        subject,
-        html: rendered.bodyHtml,
-        text: rendered.bodyText,
-        tags: [
-          { name: 'type', value: 'test' },
-          { name: 'account_id', value: digestInfo.accountId }
-        ]
-      });
+      // Send email via Resend with rate limiting and retry logic
+      const response = await this.rateLimiter.execute(async () => {
+        return await this.resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || 'noreply@mediagrade.grand-shooting.com',
+          to: recipient,
+          subject,
+          html: rendered.bodyHtml,
+          text: rendered.bodyText,
+          tags: [
+            { name: 'type', value: 'test' },
+            { name: 'account_id', value: digestInfo.accountId }
+          ]
+        });
+      }, { recipient });
 
       if (response.error) {
-        // Provide more detailed error message for authentication issues
-        if (response.error.message?.includes('401') || response.error.message?.includes('invalid') || response.error.message?.includes('unauthorized')) {
+        // Extract error details (handle optional properties safely)
+        const resendError = {
+          name: response.error.name || 'UnknownError',
+          message: response.error.message || 'Unknown error',
+          statusCode: (response.error as any).statusCode as number | undefined,
+        };
+
+        // Capture error in Sentry with detailed context
+        captureResendErrorInSentry(response.error, {
+          recipient,
+          emailType: 'test',
+          resendError,
+        });
+
+        // Provide more detailed error message based on error type
+        if (resendError.statusCode === 429 || resendError.name === 'rate_limit_exceeded') {
+          throw new Error(`Rate limit dépassé: ${resendError.message || 'Trop de requêtes. Limite de 2 requêtes par seconde.'}`);
+        } else if (resendError.statusCode === 401 || resendError.statusCode === 403 || 
+                   resendError.message?.includes('401') || resendError.message?.includes('403') ||
+                   resendError.message?.includes('invalid') || resendError.message?.includes('unauthorized')) {
           throw new Error('Clé API Resend invalide ou manquante. Vérifiez la configuration RESEND_API_KEY.');
+        } else if (resendError.statusCode === 400) {
+          throw new Error(`Requête invalide: ${resendError.message || 'Vérifiez les paramètres de l\'email.'}`);
+        } else if (resendError.statusCode === 404) {
+          throw new Error(`Ressource non trouvée: ${resendError.message || 'Vérifiez la configuration du domaine d\'envoi.'}`);
+        } else if (resendError.statusCode >= 500) {
+          throw new Error(`Erreur serveur Resend: ${resendError.message || 'Erreur temporaire du service Resend.'}`);
         }
-        throw new Error(response.error.message || 'Erreur lors de l\'envoi de l\'email');
+        throw new Error(resendError.message || 'Erreur lors de l\'envoi de l\'email');
       }
 
       logger.info(`Test email sent to ${recipient}`);
@@ -194,6 +354,20 @@ export class EmailSender {
     } catch (error) {
       let errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
+
+      // Capture error in Sentry if not already captured (for non-Resend errors)
+      // Resend errors are already captured above, but network errors, etc. need to be captured here
+      if (process.env.SENTRY_DSN) {
+        // Only capture if it's not a Resend error (those are already captured above)
+        if (!errorMessage.includes('Rate limit') && 
+            !errorMessage.includes('Clé API Resend') &&
+            !errorMessage.includes('rate_limit_exceeded')) {
+          captureResendErrorInSentry(error, {
+            recipient,
+            emailType: 'test',
+          });
+        }
+      }
 
       // Check if it's an authentication error from Resend
       if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('invalid')) {
@@ -208,17 +382,6 @@ export class EmailSender {
       logger.error(`Failed to send test email to ${recipient}: ${errorMessage}`);
       if (errorStack) {
         logger.error(`Stack trace: ${errorStack}`);
-      }
-
-      // Also send to Sentry
-      if (process.env.SENTRY_DSN) {
-        Sentry.captureException(error, {
-          tags: {
-            type: 'test_email',
-            recipient,
-            has_api_key: !!process.env.RESEND_API_KEY
-          }
-        });
       }
 
       return {
