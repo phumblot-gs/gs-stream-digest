@@ -1,4 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
+import { Type } from '@sinclair/typebox';
 import { z } from 'zod';
 import { getDb, applications, eventTypes } from '@gs-digest/database';
 import { eq, desc, asc } from 'drizzle-orm';
