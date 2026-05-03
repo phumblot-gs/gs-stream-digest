@@ -112,7 +112,7 @@ export class NATSEventClient {
       }
 
       // Make request to NATS API
-      const url = `${this.baseUrl}/api/events/query`;
+      const url = `${this.baseUrl}/v1/events/query`;
 
       logger.info({
         event: 'nats_fetch_events',
@@ -276,7 +276,7 @@ export class NATSEventClient {
    */
   async fetchEvent(uid: string): Promise<Event | null> {
     try {
-      const url = `${this.baseUrl}/api/events/${uid}`;
+      const url = `${this.baseUrl}/v1/events/${uid}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -307,7 +307,7 @@ export class NATSEventClient {
    */
   async testConnection(): Promise<boolean> {
     try {
-      const url = `${this.baseUrl}/api/health`;
+      const url = `${this.baseUrl}/health`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -337,7 +337,7 @@ export class NATSEventClient {
    */
   async emitEvent(event: Partial<Event>): Promise<void> {
     try {
-      const url = `${this.baseUrl}/api/events`;
+      const url = `${this.baseUrl}/v1/events`;
 
       // Map our internal Event format to NATS API format
       // NATS expects: { eventType, timestamp, source, actor (required), scope, payload, metadata }
